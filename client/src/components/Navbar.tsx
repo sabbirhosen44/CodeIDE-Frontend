@@ -11,7 +11,7 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur ">
-      <div className="container h-20 flex justify-between ">
+      <div className="container h-16 flex justify-between ">
         <Link
           to="/"
           className="flex justify-center items-center gap-1 font-semibold text-primary"
