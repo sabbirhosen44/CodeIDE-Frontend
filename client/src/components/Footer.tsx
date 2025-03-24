@@ -9,10 +9,10 @@ const Footer = () => {
           <div className="space-y-4">
             <Link
               to="/"
-              className="flex items-center gap-1 font-semibold text-primary"
+              className="flex items-center gap-1 font-semibold text-primary text-xl"
             >
               <FaCodepen className="size-5 " />
-              <span>Code IDE</span>
+              <span>CodeIDE</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               A powerful cloud-based IDE for developers to code, collaborate,

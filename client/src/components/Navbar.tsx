@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { navLinks } from "./constants";
+import { navLinks } from "@/constants";
 import { FaCodepen } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 import ModeToggle from "./ModeToggle";
@@ -10,14 +10,14 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur ">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur ">
       <div className="container h-16 flex justify-between ">
         <Link
           to="/"
-          className="flex justify-center items-center gap-1 font-semibold text-primary"
+          className="flex justify-center items-center gap-1 text-xl font-semibold text-primary"
         >
           <FaCodepen className="size-5 " />
-          <span className="hidden md:inline-block">Code IDE</span>
+          <span className="hidden md:inline-block">CodeIDE</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
