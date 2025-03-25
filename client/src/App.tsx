@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useTheme } from "./hooks/use-theme";
 import MainLayout from "./Layout/MainLayout";
 import HomePage from "./pages/HomePage";
+import TemplatesPage from "./pages/TemplatesPage";
 
 const router = createBrowserRouter([
   {
@@ -12,6 +13,10 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <HomePage />,
+      },
+      {
+        path: "/templates",
+        element: <TemplatesPage />,
       },
     ],
   },
