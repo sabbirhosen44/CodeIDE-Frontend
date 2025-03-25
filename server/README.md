@@ -70,6 +70,7 @@ The CodeIDE platform is a web-based integrated development environment that allo
 
 ### 2.2 Architecture Diagram
 
+![Project Architecture](images/backend-architecture.png)
 
 ### 2.3 Technology Stack
 
@@ -100,8 +101,6 @@ The backend is organized into domain-specific microservices:
 ---
 
 ## 3. Entity Relationship Diagram
-
-
 
 ---
 
@@ -621,7 +620,3 @@ The Billing Service manages subscriptions and payments:
 - UsageService: Tracks resource usage
 
 ---
-
-
-
-
