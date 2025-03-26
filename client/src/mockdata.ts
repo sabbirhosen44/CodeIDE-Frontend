@@ -1203,3 +1203,326 @@ puts "Hello, World!"`,
     ],
   },
 ];
+
+// Mock snippets data
+export const MOCK_SNIPPETS = [
+  {
+    id: "snippet1",
+    title: "React useEffect Cleanup",
+    description:
+      "How to properly clean up effects in React functional components",
+    content: `import React, { useState, useEffect } from 'react';
+
+function Timer() {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds(seconds => seconds + 1);
+    }, 1000);
+    
+    // Cleanup function to clear the interval when component unmounts
+    return () => clearInterval(interval);
+  }, []);
+
+  return <div>Seconds: {seconds}</div>;
+}
+
+export default Timer;`,
+    language: "javascript",
+    tags: ["react", "hooks", "useEffect", "cleanup"],
+    author: {
+      id: "user1",
+      name: "John Doe",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    createdAt: "2023-05-10T14:30:00Z",
+    likes: 42,
+    comments: [
+      {
+        id: "comment1",
+        author: {
+          id: "user2",
+          name: "Jane Smith",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content: "This is exactly what I needed, thanks!",
+        createdAt: "2023-05-10T15:45:00Z",
+      },
+      {
+        id: "comment2",
+        author: {
+          id: "user3",
+          name: "Bob Johnson",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content: "Great explanation of the cleanup pattern.",
+        createdAt: "2023-05-11T09:20:00Z",
+      },
+    ],
+  },
+  {
+    id: "snippet2",
+    title: "CSS Grid Layout",
+    description: "A responsive grid layout using CSS Grid",
+    content: `.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-gap: 20px;
+  padding: 20px;
+}
+
+.grid-item {
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .grid-container {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-gap: 10px;
+  }
+}`,
+    language: "css",
+    tags: ["css", "grid", "responsive", "layout"],
+    author: {
+      id: "user2",
+      name: "Jane Smith",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    createdAt: "2023-05-08T10:15:00Z",
+    likes: 35,
+    comments: [
+      {
+        id: "comment3",
+        author: {
+          id: "user1",
+          name: "John Doe",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content: "This is a clean implementation of CSS Grid!",
+        createdAt: "2023-05-08T11:30:00Z",
+      },
+    ],
+  },
+  {
+    id: "snippet3",
+    title: "Node.js File Upload with Multer",
+    description:
+      "How to handle file uploads in Express.js using Multer middleware",
+    content: `const express = require('express');
+const multer = require('multer');
+const path = require('path');
+
+const app = express();
+
+// Set up storage for uploaded files
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+// Create the multer instance
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 1024 * 1024 * 5 }, // 5MB file size limit
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.originalname.match(/\\.(jpg|jpeg|png|gif)$/)) {
+      return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+  }
+});
+
+// Single file upload route
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  
+  res.send({
+    message: 'File uploaded successfully',
+    file: req.file
+  });
+});
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});`,
+    language: "javascript",
+    tags: ["node.js", "express", "multer", "file-upload"],
+    author: {
+      id: "user3",
+      name: "Bob Johnson",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    createdAt: "2023-05-05T16:45:00Z",
+    likes: 28,
+    comments: [
+      {
+        id: "comment4",
+        author: {
+          id: "user4",
+          name: "Alice Williams",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content: "This helped me implement file uploads in my project, thanks!",
+        createdAt: "2023-05-06T09:10:00Z",
+      },
+      {
+        id: "comment5",
+        author: {
+          id: "user2",
+          name: "Jane Smith",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content: "Don't forget to create the uploads directory first!",
+        createdAt: "2023-05-06T14:25:00Z",
+      },
+      {
+        id: "comment6",
+        author: {
+          id: "user5",
+          name: "Charlie Brown",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content:
+          "You might want to add error handling for the directory creation as well.",
+        createdAt: "2023-05-07T11:15:00Z",
+      },
+    ],
+  },
+  {
+    id: "snippet4",
+    title: "Python List Comprehension",
+    description: "Examples of list comprehension in Python for cleaner code",
+    content: `# Basic list comprehension
+numbers = [1, 2, 3, 4, 5]
+squared = [x**2 for x in numbers]
+print(squared)  # Output: [1, 4, 9, 16, 25]
+
+# List comprehension with condition
+even_squared = [x**2 for x in numbers if x % 2 == 0]
+print(even_squared)  # Output: [4, 16]
+
+# Nested list comprehension
+matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+flattened = [num for row in matrix for num in row]
+print(flattened)  # Output: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+# Dictionary comprehension
+squares_dict = {x: x**2 for x in numbers}
+print(squares_dict)  # Output: {1: 1, 2: 4, 3: 9, 4: 16, 5: 25}
+
+# Set comprehension
+unique_lengths = {len(word) for word in ['hello', 'world', 'python', 'code']}
+print(unique_lengths)  # Output: {5, 4, 6}`,
+    language: "python",
+    tags: ["python", "list-comprehension", "dictionaries", "sets"],
+    author: {
+      id: "user5",
+      name: "Charlie Brown",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    createdAt: "2023-05-03T13:20:00Z",
+    likes: 56,
+    comments: [
+      {
+        id: "comment7",
+        author: {
+          id: "user1",
+          name: "John Doe",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content: "List comprehensions are one of my favorite Python features!",
+        createdAt: "2023-05-03T14:30:00Z",
+      },
+      {
+        id: "comment8",
+        author: {
+          id: "user3",
+          name: "Bob Johnson",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content: "Great examples, very clear and concise.",
+        createdAt: "2023-05-04T09:45:00Z",
+      },
+    ],
+  },
+  {
+    id: "snippet5",
+    title: "SQL JOIN Examples",
+    description: "Different types of SQL JOINs with examples",
+    content: `-- Sample tables
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100)
+);
+
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    order_date DATE,
+    total_amount DECIMAL(10, 2)
+);
+
+-- INNER JOIN: Returns records that have matching values in both tables
+SELECT c.name, c.email, o.order_id, o.order_date, o.total_amount
+FROM customers c
+INNER JOIN orders o ON c.customer_id = o.customer_id;
+
+-- LEFT JOIN: Returns all records from the left table, and matched records from the right table
+SELECT c.name, c.email, o.order_id, o.order_date, o.total_amount
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id;
+
+-- RIGHT JOIN: Returns all records from the right table, and matched records from the left table
+SELECT c.name, c.email, o.order_id, o.order_date, o.total_amount
+FROM customers c
+RIGHT JOIN orders o ON c.customer_id = o.customer_id;
+
+-- FULL JOIN: Returns all records when there is a match in either left or right table
+SELECT c.name, c.email, o.order_id, o.order_date, o.total_amount
+FROM customers c
+FULL JOIN orders o ON c.customer_id = o.customer_id;`,
+    language: "sql",
+    tags: ["sql", "joins", "database", "queries"],
+    author: {
+      id: "user4",
+      name: "Alice Williams",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    createdAt: "2023-05-01T11:10:00Z",
+    likes: 47,
+    comments: [
+      {
+        id: "comment9",
+        author: {
+          id: "user2",
+          name: "Jane Smith",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content: "This is a great reference for SQL JOINs!",
+        createdAt: "2023-05-01T12:25:00Z",
+      },
+      {
+        id: "comment10",
+        author: {
+          id: "user5",
+          name: "Charlie Brown",
+          avatar: "/placeholder.svg?height=40&width=40",
+        },
+        content: "You might want to add examples with WHERE clauses too.",
+        createdAt: "2023-05-02T09:15:00Z",
+      },
+    ],
+  },
+];

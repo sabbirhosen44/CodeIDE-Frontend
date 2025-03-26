@@ -4,6 +4,8 @@ import { useTheme } from "./hooks/use-theme";
 import MainLayout from "./Layout/MainLayout";
 import HomePage from "./pages/HomePage";
 import TemplatesPage from "./pages/TemplatesPage";
+import SnippetsPage from "./pages/snippets/SnippetsPage";
+import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
 
 const router = createBrowserRouter([
   {
@@ -17,6 +19,14 @@ const router = createBrowserRouter([
       {
         path: "/templates",
         element: <TemplatesPage />,
+      },
+      {
+        path: "/snippets",
+        element: <SnippetsPage />,
+      },
+      {
+        path: "/snippets/:id",
+        element: <SnippetDetailPage />,
       },
     ],
   },
