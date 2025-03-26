@@ -68,11 +68,15 @@ The backend system interfaces with:
 
 The CodeIDE platform is a web-based integrated development environment that allows developers to write, run, and debug code directly in the browser. The system provides project management, file editing, terminal access, and real-time collaboration features.
 
-### 2.2 Architecture Diagram
+### 2.2 Backend Architecture Diagram
 
 ![Project Architecture](images/backend-architecture.png)
 
-### 2.3 Technology Stack
+### 2.3 Code Execution Architecture Diagram
+
+![Code Execution Architecture](images/code-execution-architecture.png)
+
+### 2.4 Technology Stack
 
 - **Backend Framework**: Node.js with Express
 - **Database**: MongoDB
@@ -82,7 +86,7 @@ The CodeIDE platform is a web-based integrated development environment that allo
 - **Authentication**: JWT (JSON Web Tokens)
 - **API Design**: RESTful API with JSON
 
-### 2.4 Service Organization
+### 2.5 Service Organization
 
 The backend is organized into domain-specific microservices:
 
