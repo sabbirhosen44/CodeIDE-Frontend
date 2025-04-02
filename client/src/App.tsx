@@ -1,11 +1,16 @@
 import { useEffect } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import { useTheme } from "./hooks/use-theme";
 import MainLayout from "./Layout/MainLayout";
 import HomePage from "./pages/HomePage";
 import TemplatesPage from "./pages/TemplatesPage";
 import SnippetsPage from "./pages/snippets/SnippetsPage";
 import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 const router = createBrowserRouter([
   {
@@ -30,6 +35,8 @@ const router = createBrowserRouter([
       },
     ],
   },
+  { path: "/404", element: <NotFoundPage /> },
+  { path: "*", element: <Navigate to="/404" replace /> },
 ]);
 
 function App() {
