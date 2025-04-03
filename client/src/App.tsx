@@ -11,6 +11,7 @@ import TemplatesPage from "./pages/TemplatesPage";
 import SnippetsPage from "./pages/snippets/SnippetsPage";
 import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import { Toaster } from "react-hot-toast";
 
 const router = createBrowserRouter([
   {
@@ -48,7 +49,12 @@ function App() {
     root.classList.add(theme);
   }, [theme]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster position="top-right" />
+    </>
+  );
 }
 
 export default App;

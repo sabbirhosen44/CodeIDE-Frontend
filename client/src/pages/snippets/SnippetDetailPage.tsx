@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { SlCalender } from "react-icons/sl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { MOCK_SNIPPETS } from "@/mockdata";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
@@ -21,12 +22,11 @@ import {
   FaRegBookmark,
   FaRegCommentAlt,
   FaRegHeart,
-  FaShareAlt,
 } from "react-icons/fa";
 import { FiArrowLeft, FiShare2 } from "react-icons/fi";
 import { MdContentCopy } from "react-icons/md";
+import { SlCalender } from "react-icons/sl";
 import { useNavigate, useParams } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
 
 const SnippetDetailPage = () => {
   const [activeTab, setActiveTab] = useState("code");
@@ -36,6 +36,7 @@ const SnippetDetailPage = () => {
   const [comments, setComments] = useState<any[]>([]);
   const { id: snippetID } = useParams();
   const navigate = useNavigate();
+  const showToast = useToast();
 
   useEffect(() => {
     const foundSnippet = MOCK_SNIPPETS.find(
@@ -51,14 +52,31 @@ const SnippetDetailPage = () => {
   }, [snippetID, navigate]);
 
   const handleLike = () => {
-    setIsLiked(!isLiked);
+    setIsLiked((prev) => !prev);
+
+    showToast(
+      isLiked
+        ? "You've removed your like from this snippet"
+        : "You've liked this snippet",
+      "success"
+    );
   };
+
   const handleSave = () => {
-    setIsSaved(!isSaved);
+    setIsSaved((prev) => !prev);
+
+    showToast(
+      isSaved
+        ? "Snippet added to your saved collection"
+        : "Snippet removed from your saved collection",
+      "success"
+    );
   };
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
+
+    showToast("The snippet link has been copied to your clipboard", "success");
   };
 
   const handleTabsCategory = () => {
@@ -67,6 +85,8 @@ const SnippetDetailPage = () => {
 
   const handleCopyCode = () => {
     window.navigator.clipboard.writeText(snippet.content);
+
+    showToast("The snippet code has been copied to your clipboard", "success");
   };
 
   if (!snippet) {
