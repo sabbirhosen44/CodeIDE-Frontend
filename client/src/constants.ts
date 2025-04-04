@@ -96,3 +96,91 @@ export const testimonials = [
     rating: 5,
   },
 ];
+
+// Pricing Plans
+export const PRICING_PLANS = [
+  {
+    id: "free",
+    name: "Free",
+    description: "For hobbyists and students",
+    price: 0,
+    features: [
+      "Up to 3 private projects",
+      "Basic code editor features",
+      "Community support",
+      "Limited storage (100MB)",
+      "Standard execution environment",
+    ],
+    stripePriceId: "",
+    isPopular: false,
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    description: "For professional developers",
+    price: 9.99,
+    features: [
+      "Unlimited private projects",
+      "Advanced code editor features",
+      "Priority support",
+      "Expanded storage (5GB)",
+      "Enhanced execution environment",
+      "Real-time collaboration",
+      "Custom themes and settings",
+    ],
+    stripePriceId: "price_pro",
+    isPopular: true,
+  },
+  {
+    id: "team",
+    name: "Team",
+    description: "For teams and organizations",
+    price: 29.99,
+    features: [
+      "Everything in Pro",
+      "Team management",
+      "Advanced collaboration tools",
+      "Dedicated support",
+      "Expanded storage (20GB)",
+      "Premium execution environment",
+      "Analytics and insights",
+      "Custom integrations",
+    ],
+    stripePriceId: "price_team",
+    isPopular: false,
+  },
+];
+
+// Pricing Page FAQ
+export const FAQs = [
+  {
+    id: 1,
+    question: "Can I switch plans later?",
+    answer:
+      "Yes, you can upgrade or downgrade your plan at any time. If you upgrade, you'll be charged the prorated difference. If you downgrade, you'll receive credit towards your next billing cycle.",
+  },
+  {
+    id: 2,
+    question: "What payment methods do you accept?",
+    answer:
+      "We accept all major credit cards (Visa, Mastercard, American Express) and PayPal. All payments are processed securely through Stripe.",
+  },
+  {
+    id: 3,
+    question: "Is there a free trial?",
+    answer:
+      "Yes, all paid plans come with a 14-day free trial. No credit card is required to try out CodeIDE.",
+  },
+  {
+    id: 4,
+    question: "Can I cancel my subscription?",
+    answer:
+      "You can cancel your subscription at any time. When you cancel, you'll still have access to your paid features until the end of your current billing period.",
+  },
+  {
+    id: 5,
+    question: "What happens to my projects if I downgrade?",
+    answer:
+      "If you downgrade to a plan with fewer features or storage, you'll still have access to all your projects, but you may need to reduce your usage to comply with your new plan's limits.",
+  },
+];

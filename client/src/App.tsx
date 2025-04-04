@@ -12,6 +12,7 @@ import SnippetsPage from "./pages/snippets/SnippetsPage";
 import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import { Toaster } from "react-hot-toast";
+import PricingPage from "./pages/PricingPage";
 
 const router = createBrowserRouter([
   {
@@ -33,6 +34,10 @@ const router = createBrowserRouter([
       {
         path: "/snippets/:id",
         element: <SnippetDetailPage />,
+      },
+      {
+        path: "/pricing",
+        element: <PricingPage />,
       },
     ],
   },
