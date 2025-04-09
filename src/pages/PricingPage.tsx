@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FAQ, FAQs, PRICING_PLANS } from "@/constants";
+import { FAQs, PRICING_PLANS } from "@/constants";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { FaRegCircleCheck } from "react-icons/fa6";

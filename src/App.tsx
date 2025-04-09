@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
 import {
   createBrowserRouter,
   Navigate,
@@ -6,17 +7,17 @@ import {
 } from "react-router-dom";
 import { useTheme } from "./hooks/use-theme";
 import MainLayout from "./Layout/MainLayout";
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
 import HomePage from "./pages/HomePage";
-import TemplatesPage from "./pages/TemplatesPage";
-import SnippetsPage from "./pages/snippets/SnippetsPage";
-import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
-import { Toaster } from "react-hot-toast";
 import PricingPage from "./pages/PricingPage";
+import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
+import SnippetsPage from "./pages/snippets/SnippetsPage";
+import TemplatesPage from "./pages/TemplatesPage";
 
 const router = createBrowserRouter([
   {
-    path: "/",
     element: <MainLayout />,
     children: [
       {
@@ -39,6 +40,8 @@ const router = createBrowserRouter([
         path: "/pricing",
         element: <PricingPage />,
       },
+      { path: "/login", element: <LoginPage /> },
+      { path: "/register", element: <RegisterPage /> },
     ],
   },
   { path: "/404", element: <NotFoundPage /> },
