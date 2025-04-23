@@ -52,21 +52,23 @@ const SnippetDetailPage = () => {
   }, [snippetID, navigate]);
 
   const handleLike = () => {
-    setIsLiked((prev) => !prev);
+    const updatedIsLiked = !isLiked;
+    setIsLiked(updatedIsLiked);
 
     showToast(
-      isLiked
-        ? "You've removed your like from this snippet"
-        : "You've liked this snippet",
+      updatedIsLiked
+        ? "You've liked this snippet"
+        : "You've removed your like from this snippet",
       "success"
     );
   };
 
   const handleSave = () => {
-    setIsSaved((prev) => !prev);
+    const updatedIsSaved = !isSaved;
+    setIsSaved(updatedIsSaved);
 
     showToast(
-      isSaved
+      updatedIsSaved
         ? "Snippet added to your saved collection"
         : "Snippet removed from your saved collection",
       "success"
