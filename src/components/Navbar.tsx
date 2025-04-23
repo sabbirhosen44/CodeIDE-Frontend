@@ -4,7 +4,7 @@ import { FiMenu } from "react-icons/fi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ModeToggle from "./ModeToggle";
 import { Button } from "./ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
 
 const Navbar = () => {
   const location = useLocation();
@@ -45,7 +45,7 @@ const Navbar = () => {
           </div>
           <div className="md:hidden">
             <Sheet>
-              <SheetTrigger asChild aria-label="Toggle Menu">
+              <SheetTrigger asChild>
                 <Button variant="ghost">
                   <FiMenu className="size-5" />
                 </Button>
@@ -55,21 +55,31 @@ const Navbar = () => {
                   <nav className="flex flex-col items-center gap-6">
                     {navLinks.map((link) => {
                       return (
-                        <Link
-                          to={link.path}
-                          key={link.path}
-                          className={`font-medium text-sm transition-colors ${link.path === location.pathname ? "text-primary" : ""}`}
-                        >
-                          {link.title}
-                        </Link>
+                        <SheetClose asChild key={link.path}>
+                          <Link
+                            to={link.path}
+                            key={link.path}
+                            className={`font-medium text-sm transition-colors ${link.path === location.pathname ? "text-primary" : ""}`}
+                          >
+                            {link.title}
+                          </Link>
+                        </SheetClose>
                       );
                     })}
-                    <Button variant="ghost" onClick={() => navigate("/login")}>
-                      Sign In
-                    </Button>
-                    <Button onClick={() => navigate("/register")}>
-                      Sign Up
-                    </Button>
+                    <SheetClose asChild>
+                      <Button
+                        variant="ghost"
+                        onClick={() => navigate("/login")}
+                      >
+                        Sign In
+                      </Button>
+                    </SheetClose>
+
+                    <SheetClose asChild>
+                      <Button onClick={() => navigate("/register")}>
+                        Sign Up
+                      </Button>
+                    </SheetClose>
                   </nav>
                 </div>
               </SheetContent>
