@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,14 +9,72 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { AppDispatch, RootState } from "@/store";
+import { clearError, register as registerUser } from "@/store/slices/authSlice";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FiAlertCircle, FiLoader } from "react-icons/fi";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { z } from "zod";
+
+const registerSchema = z
+  .object({
+    name: z.string().min(2, { message: "Name must be atleast 2 characters" }),
+    email: z.string().email({ message: "Please enter a valid email address" }),
+    password: z
+      .string()
+      .min(8, { message: "Password must be atleast 8 characters" })
+      .regex(/[A-Z]/, {
+        message: "Password must include atleast one uppercase letter",
+      })
+      .regex(/[a-z]/, {
+        message: "Password must include atleast one lowercase letter",
+      })
+      .regex(/[0-9]/, {
+        message: "Password must include atleast one number",
+      })
+      .regex(/[^A-Za-z0-9]/, {
+        message: "Password must include atleast one special character",
+      }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Password don't match",
+    path: ["confirmPassword"],
+  });
+
+type registerFormValues = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const [isShowPassword, setIsShowPassword] = useState<boolean>(false);
   const [isShowConfirmPassword, setIsShowConfirmPassword] =
     useState<boolean>(false);
+  const { isLoading, error } = useSelector((state: RootState) => state.auth);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<registerFormValues>({
+    resolver: zodResolver(registerSchema),
+  });
+
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  const onSubmit = async (data: registerFormValues) => {
+    const { name, email, password } = data;
+
+    await dispatch(registerUser({ name, email, password }));
+
+    reset();
+  };
 
   return (
     <div className="container py-12 max-w-md mx-auto px-4">
@@ -29,44 +88,96 @@ const RegisterPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action="" className="space-y-6 ">
+          {error && (
+            <Alert variant="destructive" className="mb-4 flex items-center">
+              <FiAlertCircle className="-mt-1 size-4" />
+              <AlertDescription className="font-medium">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input type="text" placeholder="John Doe" />
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                {...register("name")}
+              />
+              {errors.name && (
+                <p className="text-sm text-destructive font-medium">
+                  {errors.name.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input type="email" placeholder="john@example.com" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="john@example.com"
+                {...register("email")}
+              />
+              {errors.email && (
+                <p className="text-sm text-destructive font-medium">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2 relative">
               <Label htmlFor="password">Password</Label>
               <Input
+                id="password"
                 type={isShowPassword ? "text" : "password"}
                 placeholder="Enter password ..."
+                {...register("password")}
               />
               <div
-                className="absolute right-4 top-1/2 cursor-pointer"
+                className={`absolute right-4 ${errors.password ? "top-[35%]" : "top-1/2"}  cursor-pointer`}
                 onClick={() => setIsShowPassword((prev) => !prev)}
               >
                 {isShowPassword ? <FaEyeSlash /> : <FaEye />}
               </div>
+
+              {errors.password && (
+                <p className="text-sm text-destructive font-medium">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2 relative">
               <Label htmlFor="confirmpassword">Confirm Password</Label>
               <Input
+                id="confirmPassword"
                 type={isShowConfirmPassword ? "text" : "password"}
                 placeholder="Enter confirm password ..."
+                {...register("confirmPassword")}
               />
               <div
-                className="absolute right-4 top-1/2 cursor-pointer"
+                className={`absolute right-4  ${errors.confirmPassword ? "top-[35%]" : "top-1/2"} cursor-pointer`}
                 onClick={() => setIsShowConfirmPassword((prev) => !prev)}
               >
                 {isShowConfirmPassword ? <FaEyeSlash /> : <FaEye />}
               </div>
+
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive font-medium">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
             </div>
 
-            <Button asChild className="w-full">
-              <Link to="/register">Sign up</Link>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <FiLoader className="mr-2 size-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Sign up"
+              )}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
