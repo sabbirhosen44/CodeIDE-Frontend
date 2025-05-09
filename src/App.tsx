@@ -15,6 +15,7 @@ import PricingPage from "./pages/PricingPage";
 import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
 import SnippetsPage from "./pages/snippets/SnippetsPage";
 import TemplatesPage from "./pages/TemplatesPage";
+import EditorPage from "./pages/editor/EditorPage";
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
         path: "/snippets/:id",
         element: <SnippetDetailPage />,
       },
+
       {
         path: "/pricing",
         element: <PricingPage />,
@@ -43,6 +45,10 @@ const router = createBrowserRouter([
       { path: "/login", element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
     ],
+  },
+  {
+    path: "/editor",
+    element: <EditorPage />,
   },
   { path: "/404", element: <NotFoundPage /> },
   { path: "*", element: <Navigate to="/404" replace /> },

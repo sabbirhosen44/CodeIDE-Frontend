@@ -184,3 +184,22 @@ export const FAQs = [
       "If you downgrade to a plan with fewer features or storage, you'll still have access to all your projects, but you may need to reduce your usage to comply with your new plan's limits.",
   },
 ];
+
+export const EDITOR_THEMES = [
+  { value: "vs", label: "Light" },
+  { value: "vs-dark", label: "Dark" },
+  { value: "hc-black", label: "High Contrast Dark" },
+  { value: "hc-light", label: "High Contrast Light" },
+  { value: "monokai", label: "Monokai" },
+  { value: "github", label: "GitHub" },
+  { value: "solarized-dark", label: "Solarized Dark" },
+  { value: "solarized-light", label: "Solarized Light" },
+  { value: "dracula", label: "Dracula" },
+  { value: "nord", label: "Nord" },
+  { value: "ayu-dark", label: "Ayu Dark" },
+  { value: "ayu-light", label: "Ayu Light" },
+  { value: "github-dark", label: "GitHub Dark" },
+  { value: "material-darker", label: "Material Darker" },
+  { value: "material-lighter", label: "Material Lighter" },
+  { value: "material-palenight", label: "Material Palenight" },
+];
