@@ -27,6 +27,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -35,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -43,9 +49,11 @@ import {
 } from "@/components/ui/tooltip";
 import { EDITOR_THEMES } from "@/constants";
 import { useToast } from "@/hooks/use-toast";
+import Editor from "@monaco-editor/react";
 import { useEffect, useState } from "react";
 import { FaRegEye, FaRegSave } from "react-icons/fa";
 import {
+  FiArrowLeft,
   FiLoader,
   FiMaximize,
   FiMinimize,
@@ -61,9 +69,16 @@ import {
   LuSquareTerminal,
 } from "react-icons/lu";
 import { RxCross2 } from "react-icons/rx";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import FileExplorer from "./FileExplorer";
+import { MOCK_TEMPLATES } from "@/mockdata";
+import { EditorSettings } from "@/types";
+import OutputConsole from "./OutputConsole";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 const EditorPage = () => {
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [currentTemplate, setCurrentTemplate] = useState<any>(null);
   const [searchParams] = useSearchParams();
   const [isRunning, setIsRunning] = useState(false);
@@ -72,7 +87,35 @@ const EditorPage = () => {
   const [isFileExplorerVisible, setIsFileExplorerVisible] = useState(true);
   const [isConsoleVisible, setIsConsoleVisible] = useState(true);
   const [isTerminalVisible, setIsTerminalVisible] = useState(true);
+  const [activeFile, setActiveFile] = useState<any>(null);
+  const [editorSettings, setEditorSettings] = useState<EditorSettings>({
+    theme: "vs-dark",
+    fontSize: 14,
+    tabSize: 2,
+    wordWrap: "on",
+    lineNumbers: "on",
+    miniMap: {
+      enabled: true,
+    },
+    autoIndent: "advanced",
+    formatOnPaste: true,
+    formatOnType: true,
+    snippetSuggestions: "inline",
+    codeLens: true,
+    cursorBlinking: "blink",
+    cursorStyle: "line",
+    cursorWidth: 2,
+    fontFamily: "Menlo, Monaco, 'Courier New', monospace",
+    fontLigatures: false,
+    lineHeight: 20,
+    letterSpacing: 0,
+    fontWeight: "normal",
+    smoothScrolling: true,
+    renderWhiteSpace: "none",
+    bracketPairColorization: { enabled: true },
+  });
   const showToast = useToast();
+  const navigate = useNavigate();
 
   // Mock collaborators with more detailed status
   const [collaborators, setCollaborators] = useState([
@@ -97,7 +140,24 @@ const EditorPage = () => {
   ]);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      showToast(
+        "Authentication required. Please log in to use the editor.",
+        "error"
+      );
+
+      navigate("/login");
+    }
+
     const templateId = searchParams.get("template");
+    if (templateId) {
+      const template = MOCK_TEMPLATES.find((t) => t._id === templateId);
+
+      if (template) {
+        setCurrentTemplate(template);
+        setActiveFile(template.files[0]);
+      }
+    }
   }, [searchParams]);
 
   const toggleFileExplorer = () => {
@@ -162,9 +222,16 @@ const EditorPage = () => {
   };
 
   return (
-    <div className="container flex flex-col">
+    <div className="px-4 flex flex-col">
       <div className="border-b p-2 flex items-center justify-between bg-background">
         <div className="flex items-center">
+          <Button
+            variant="ghost"
+            className="p-2 mr-2"
+            onClick={() => navigate("/templates")}
+          >
+            <FiArrowLeft className=" size-4" />
+          </Button>
           <h1 className="text-lg font-semibold mr-4">
             {currentTemplate ? currentTemplate.name : "New Project"}
           </h1>
@@ -511,6 +578,130 @@ const EditorPage = () => {
             )}
           </Button>
         </div>
+      </div>
+
+      {/* Editor Layout */}
+      <div className="flex h-screen overflow-hidden">
+        <ResizablePanelGroup direction="horizontal">
+          {isFileExplorerVisible && (
+            <>
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                <div className="h-full border-r">
+                  <FileExplorer />
+                </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+            </>
+          )}
+
+          <ResizablePanel defaultSize={isFileExplorerVisible ? 60 : 80}>
+            <ResizablePanelGroup direction="vertical">
+              <ResizablePanel
+                defaultSize={isConsoleVisible || isTerminalVisible ? 70 : 100}
+              >
+                <Tabs defaultValue="editor" className="h-full flex flex-col">
+                  <div className="border-b px-4">
+                    <TabsList>
+                      <TabsTrigger value="editor">Editor</TabsTrigger>
+                      <TabsTrigger value="preview">Preview</TabsTrigger>
+                    </TabsList>
+                  </div>
+                  <TabsContent value="editor" className="flex-1">
+                    {activeFile && (
+                      <Editor
+                        height="100%"
+                        language={
+                          activeFile.name.split(".").pop() || "javascript"
+                        }
+                        value={activeFile.content}
+                        theme={editorSettings.theme}
+                        options={{
+                          fontSize: editorSettings.fontSize,
+                          fontFamily: editorSettings.fontFamily,
+                          lineHeight: editorSettings.lineHeight,
+                          letterSpacing: editorSettings.letterSpacing,
+                          tabSize: editorSettings.tabSize,
+                          wordWrap: editorSettings.wordWrap,
+                          minimap: editorSettings.miniMap,
+                          lineNumbers: editorSettings.lineNumbers,
+                          formatOnPaste: editorSettings.formatOnPaste,
+                          formatOnType: editorSettings.formatOnType,
+                          autoIndent: editorSettings.autoIndent
+                            ? "advanced"
+                            : "none",
+                          codeLens: editorSettings.codeLens,
+                          cursorBlinking: editorSettings.cursorBlinking,
+                          cursorStyle: editorSettings.cursorStyle,
+                          cursorWidth: editorSettings.cursorWidth,
+                          fontLigatures: editorSettings.fontLigatures,
+                          fontWeight: editorSettings.fontWeight,
+                          renderWhitespace: editorSettings.renderWhiteSpace,
+                          smoothScrolling: editorSettings.smoothScrolling,
+                          bracketPairColorization:
+                            editorSettings.bracketPairColorization,
+                          scrollBeyondLastLine: false,
+                          automaticLayout: true,
+                        }}
+                      />
+                    )}
+                  </TabsContent>
+                  <TabsContent value="preview" className="flex-1">
+                    <iframe
+                      src="https//:localhost:8000"
+                      className="w-full h-full border-0"
+                      title="preview"
+                    />
+                  </TabsContent>
+                </Tabs>
+              </ResizablePanel>
+              {(isConsoleVisible || isTerminalVisible) && (
+                <>
+                  <ResizableHandle withHandle />
+                  <ResizablePanel defaultSize={30}>
+                    <Tabs
+                      defaultValue="console"
+                      className="h-full flex flex-col"
+                    >
+                      <div className="border-b px-4 flex items-center">
+                        <TabsList>
+                          {isConsoleVisible && (
+                            <TabsTrigger value="console">Output</TabsTrigger>
+                          )}
+                          {isTerminalVisible && (
+                            <TabsTrigger value="terminal">Terminal</TabsTrigger>
+                          )}
+                        </TabsList>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={() => {
+                            if (isConsoleVisible && isTerminalVisible) {
+                              setIsConsoleVisible(false);
+                              setIsTerminalVisible(false);
+                            }
+                          }}
+                        >
+                          <RxCross2 className="size-4" />
+                        </Button>
+                      </div>
+                      <TabsContent value="console" className="flex-1">
+                        <OutputConsole />
+                      </TabsContent>
+                      {isTerminalVisible && (
+                        <TabsContent value="terminal" className="flex-1 p-0">
+                          <div className="h-full bg-[#1e1e1e] text-white font-mono text-sm">
+                            <div className="h-full w-full" />
+                          </div>
+                        </TabsContent>
+                      )}
+                    </Tabs>
+                  </ResizablePanel>
+                </>
+              )}
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );

@@ -35,6 +35,27 @@ export const register = createAsyncThunk(
       localStorage.setItem("token", response.data.token);
       return response.data.user;
     } catch (error: any) {
+      return rejectWithValue(
+        error.response.data.message || "registration failed"
+      );
+    }
+  }
+);
+
+export const login = createAsyncThunk(
+  "auth/login",
+  async (
+    { email, password }: { email: string; password: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await axios.post(`${API}/auth/login`, {
+        email,
+        password,
+      });
+      localStorage.setItem("token", response.data.token);
+      return response.data.user;
+    } catch (error: any) {
       return rejectWithValue(error.response.data.message || "Login failed");
     }
   }
@@ -50,6 +71,7 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Register
       .addCase(register.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -60,6 +82,19 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
       })
       .addCase(register.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      }) // Login
+      .addCase(login.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });
