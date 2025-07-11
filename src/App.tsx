@@ -16,6 +16,9 @@ import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
 import SnippetsPage from "./pages/snippets/SnippetsPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import EditorPage from "./pages/editor/EditorPage";
+import VerifyEmail from "./pages/auth/VerifyEmail";
+import VerifyEmailPage from "./pages/auth/VerifyEmail";
+import DashboardPage from "./pages/Dashboard/DashboardPage";
 
 const router = createBrowserRouter([
   {
@@ -42,8 +45,13 @@ const router = createBrowserRouter([
         path: "/pricing",
         element: <PricingPage />,
       },
+      {
+        path: "/dashboard",
+        element: <DashboardPage />,
+      },
       { path: "/login", element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
+      { path: "/verify-email/:id", element: <VerifyEmailPage /> },
     ],
   },
   {

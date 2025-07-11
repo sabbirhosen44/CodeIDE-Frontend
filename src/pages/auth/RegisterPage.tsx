@@ -15,7 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { FiAlertCircle, FiLoader } from "react-icons/fi";
+import { FiAlertCircle, FiLoader, FiMail } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { z } from "zod";
@@ -54,6 +54,8 @@ const RegisterPage = () => {
   const [isShowConfirmPassword, setIsShowConfirmPassword] =
     useState<boolean>(false);
   const { isLoading, error } = useSelector((state: RootState) => state.auth);
+  const [registrationSuccess, setRegistrationSuccess] =
+    useState<boolean>(false);
 
   const {
     register,
@@ -71,10 +73,52 @@ const RegisterPage = () => {
   const onSubmit = async (data: registerFormValues) => {
     const { name, email, password } = data;
 
-    await dispatch(registerUser({ name, email, password }));
+    const result = await dispatch(registerUser({ name, email, password }));
 
-    reset();
+    if (registerUser.fulfilled.match(result)) {
+      setRegistrationSuccess(true);
+      reset();
+    }
   };
+
+  if (registrationSuccess) {
+    return (
+      <div className="container py-12 max-w-md mx-auto px-4">
+        <Card>
+          <CardHeader className="space-y-1 text-center">
+            <CardTitle className="text-2xl font-bold">
+              Check Your Email
+            </CardTitle>
+            <CardDescription>
+              We've sent you a verification link
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <div className="mx-auto size-16 bg-green-100 rounded-full flex items-center justify-center">
+              <FiMail className="size-8 text-green-600" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Please check your email and click the verification link to
+                activate your account.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Didn't receive the email? Check your spam folder.
+              </p>
+            </div>
+            <div className="pt-4">
+              <Link
+                to="/login"
+                className="text-primary hover:underline text-sm"
+              >
+                Back to Login
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-12 max-w-md mx-auto px-4">
