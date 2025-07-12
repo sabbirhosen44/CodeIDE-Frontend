@@ -32,11 +32,37 @@ export const register = createAsyncThunk(
         email,
         password,
       });
-      localStorage.setItem("token", response.data.token);
-      return response.data.user;
+
+      const { user, token } = response.data;
+      if (user.isEmailVerified) {
+        localStorage.setItem("token", token);
+        return { user, isVerified: true };
+      }
+
+      return rejectWithValue(
+        "Registration successful! Please verify your email before logging in."
+      );
     } catch (error: any) {
       return rejectWithValue(
-        error.response.data.message || "registration failed"
+        error.response?.data?.message || "Registration failed"
+      );
+    }
+  }
+);
+
+export const verifyEmail = createAsyncThunk(
+  "auth/verifyEmail",
+  async ({ token }: { token: string }, { rejectWithValue }) => {
+    try {
+      console.log("verify email token : ", token);
+      const response = await axios.get(`${API}/auth/verify-email/${token}`);
+      localStorage.setItem("token", response.data.token);
+
+      console.log(response);
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response.data.message || "Failed to verify email"
       );
     }
   }
@@ -61,16 +87,73 @@ export const login = createAsyncThunk(
   }
 );
 
-export const verifyEmail = createAsyncThunk(
-  "auth/verifyEmail",
-  async ({ token }: { token: string }, { rejectWithValue }) => {
+export const loadUser = createAsyncThunk(
+  "auth/loadUser",
+  async (_, { rejectWithValue }) => {
+    const token = localStorage.getItem("token");
+    if (!token) return rejectWithValue("No Token");
+
     try {
-      const response = await axios.get(`${API}/auth/verify-email/${token}`);
+      const response = await axios.get(`${API}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response.data.message || "Failed to load user!"
+      );
+    }
+  }
+);
+
+export const logout = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      await axios.get(`${API}/auth/logout`);
+      localStorage.removeItem("token");
+      return null;
+    } catch (error: any) {
+      localStorage.removeItem("token");
+      return rejectWithValue("Logout Failed!");
+    }
+  }
+);
+
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async ({ email }: { email: string }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API}/auth/forgotpassword`, {
+        email,
+      });
+      return response.data.message;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response.data.message || "Failed to send reset email"
+      );
+    }
+  }
+);
+
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async (
+    { token, password }: { token: string; password: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await axios.post(`${API}/auth/resetpassword/${token}`, {
+        password,
+      });
       localStorage.setItem("token", response.data.token);
       return response.data.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response.data.message || "Failed to verify email"
+        error.response.data.message || "Failed to reset password"
       );
     }
   }
@@ -93,11 +176,13 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload;
+        state.user = action.payload.user;
         state.isAuthenticated = true;
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
+        state.user = null;
+        state.isAuthenticated = false;
         state.error = action.payload as string;
       }) // Login
       .addCase(login.pending, (state) => {
@@ -124,6 +209,65 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
       })
       .addCase(verifyEmail.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Load User
+      .addCase(loadUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loadUser.fulfilled, (state, action) => {
+        console.log(action.payload);
+        state.isLoading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(loadUser.rejected, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        localStorage.removeItem("token");
+      })
+      // Logout
+      .addCase(logout.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.token = null;
+      })
+      .addCase(logout.rejected, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.token = null;
+      })
+      // Forgot Password
+      .addCase(forgotPassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Reset Password
+      .addCase(resetPassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

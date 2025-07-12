@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AppDispatch, RootState } from "@/store";
-import { verifyEmail } from "@/store/slices/authSlice";
+import { logout, verifyEmail } from "@/store/slices/authSlice";
 import { useEffect } from "react";
 import { FiAlertCircle, FiCheckCircle, FiLoader } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
@@ -31,9 +31,19 @@ const VerifyEmailPage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard");
+      dispatch(logout());
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, dispatch]);
+
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading && !error) {
+      const timeout = setTimeout(() => {
+        navigate("/login");
+      }, 1000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isAuthenticated, isLoading, error, navigate]);
 
   if (!id) {
     return (

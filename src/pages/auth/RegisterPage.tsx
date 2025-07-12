@@ -78,6 +78,14 @@ const RegisterPage = () => {
     if (registerUser.fulfilled.match(result)) {
       setRegistrationSuccess(true);
       reset();
+    } else if (registerUser.rejected.match(result)) {
+      if (
+        result.payload ===
+        "Registration successful! Please verify your email before logging in."
+      ) {
+        setRegistrationSuccess(true);
+        reset();
+      }
     }
   };
 

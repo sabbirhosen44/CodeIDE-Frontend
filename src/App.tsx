@@ -7,18 +7,19 @@ import {
 } from "react-router-dom";
 import { useTheme } from "./hooks/use-theme";
 import MainLayout from "./Layout/MainLayout";
+import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+import VerifyEmailPage from "./pages/auth/VerifyEmail";
+import DashboardPage from "./pages/Dashboard/DashboardPage";
+import EditorPage from "./pages/editor/EditorPage";
 import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import PricingPage from "./pages/PricingPage";
 import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
 import SnippetsPage from "./pages/snippets/SnippetsPage";
 import TemplatesPage from "./pages/TemplatesPage";
-import EditorPage from "./pages/editor/EditorPage";
-import VerifyEmail from "./pages/auth/VerifyEmail";
-import VerifyEmailPage from "./pages/auth/VerifyEmail";
-import DashboardPage from "./pages/Dashboard/DashboardPage";
+import ResetPasswordPage from "./pages/auth/ResetPassword";
 
 const router = createBrowserRouter([
   {
@@ -51,7 +52,9 @@ const router = createBrowserRouter([
       },
       { path: "/login", element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
+      { path: "/forgot-password", element: <ForgotPasswordPage /> },
       { path: "/verify-email/:id", element: <VerifyEmailPage /> },
+      { path: "/reset-password/:id", element: <ResetPasswordPage /> },
     ],
   },
   {
