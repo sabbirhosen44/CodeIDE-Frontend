@@ -98,25 +98,6 @@ const TemplatesPage = () => {
               </SelectGroup>
             </SelectContent>
           </Select>
-
-          <Select
-            defaultValue="all"
-            onValueChange={(value) => setFrameworkFilter(value)}
-          >
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by framework" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Frameworks</SelectItem>
-              <SelectItem value="React">React</SelectItem>
-              <SelectItem value="Next.js">Next.js</SelectItem>
-              <SelectItem value="Vue">Vue</SelectItem>
-              <SelectItem value="Express">Express</SelectItem>
-              <SelectItem value="Django">Django</SelectItem>
-              <SelectItem value="Mern">Mern</SelectItem>
-              <SelectItem value="Laravel">Laravel</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
       {filteredTemplates.length > 0 ? (

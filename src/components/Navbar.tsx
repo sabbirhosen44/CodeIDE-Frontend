@@ -75,7 +75,7 @@ const Navbar = () => {
         <div className="flex items-center gap-4">
           <ModeToggle />
 
-          {isLoading && <FiLoader className="h-5 w-5 animate-spin" />}
+          {isLoading && <FiLoader className="size-5 animate-spin" />}
 
           {isAuthenticated && !isLoading && (
             <DropdownMenu>

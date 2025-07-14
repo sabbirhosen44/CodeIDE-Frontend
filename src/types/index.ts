@@ -43,3 +43,67 @@ export interface EditorSettings {
   renderWhiteSpace: "none" | "boundary" | "selection" | "all";
   bracketPairColorization: { enabled: boolean };
 }
+
+export interface TemplateFile {
+  id: string;
+  name: string;
+  type: "file" | "folder";
+  parentId?: string;
+  content?: string;
+  isExpanded?: boolean;
+  children?: TemplateFile[];
+}
+
+export interface Template {
+  _id: string;
+  name: string;
+  description: string;
+  category:
+    | "Frontend"
+    | "Backend"
+    | "Full Stack"
+    | "Mobile"
+    | "Desktop"
+    | "Standalone"
+    | "Library"
+    | "Framework";
+  language:
+    | "JavaScript"
+    | "TypeScript"
+    | "Python"
+    | "Java"
+    | "C"
+    | "C++"
+    | "C#"
+    | "PHP"
+    | "Ruby"
+    | "Go"
+    | "Rust"
+    | "Swift"
+    | "Kotlin";
+  framework?: string | null;
+  tags: string[];
+  files: TemplateFile[];
+  downloads: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TemplateState {
+  templates: Template[];
+  currentTemplate: Template | null;
+  isLoading: boolean;
+  error: string | null;
+  totalPages: number;
+  currentPage: number;
+  totalCount: number;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  totalProjects: number;
+  totalTemplates: number;
+  totalSnippets: number;
+  userGrowth: Array<{ name: string; users: number }>;
+  projectGrowth: Array<{ name: string; projects: number }>;
+}

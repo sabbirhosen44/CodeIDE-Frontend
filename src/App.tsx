@@ -7,9 +7,11 @@ import {
 } from "react-router-dom";
 import { useTheme } from "./hooks/use-theme";
 import MainLayout from "./Layout/MainLayout";
+import AdminDashboardPage from "./pages/admin/AdminDashboard";
 import ForgotPasswordPage from "./pages/auth/ForgotPassword";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+import ResetPasswordPage from "./pages/auth/ResetPassword";
 import VerifyEmailPage from "./pages/auth/VerifyEmail";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
 import EditorPage from "./pages/editor/EditorPage";
@@ -19,7 +21,6 @@ import PricingPage from "./pages/PricingPage";
 import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
 import SnippetsPage from "./pages/snippets/SnippetsPage";
 import TemplatesPage from "./pages/TemplatesPage";
-import ResetPasswordPage from "./pages/auth/ResetPassword";
 
 const router = createBrowserRouter([
   {
@@ -49,6 +50,10 @@ const router = createBrowserRouter([
       {
         path: "/dashboard",
         element: <DashboardPage />,
+      },
+      {
+        path: "/admin",
+        element: <AdminDashboardPage />,
       },
       { path: "/login", element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
