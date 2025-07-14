@@ -1,55 +1,4 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  FaSearch,
-  FaPlus,
-  FaTachometerAlt,
-  FaUserCircle,
-  FaFileAlt,
-  FaCode,
-  FaChevronLeft,
-  FaChevronRight,
-  FaEye,
-  FaTrashAlt,
-  FaLayerGroup,
-} from "react-icons/fa";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Legend,
-} from "recharts";
 import AddTemplateForm from "@/components/admin/AddTemplateForm";
-import { fetchTemplates, deleteTemplate } from "@/store/slices/templateSlice";
-import type { RootState, AppDispatch } from "@/store";
-import { getAdminStats } from "@/store/slices/adminSlice";
-import { FaCheckCircle } from "react-icons/fa";
-import { FiXCircle } from "react-icons/fi";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,15 +10,73 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { AppDispatch, RootState } from "@/store";
+import { getAdminStats } from "@/store/slices/adminSlice";
+import {
+  clearError,
+  deleteTemplate,
+  fetchTemplates,
+  setCurrentPage,
+} from "@/store/slices/templateSlice";
+import { useEffect, useState } from "react";
+import {
+  FaCheckCircle,
+  FaCode,
+  FaEye,
+  FaFileAlt,
+  FaLayerGroup,
+  FaPlus,
+  FaSearch,
+  FaTachometerAlt,
+  FaTrashAlt,
+  FaUserCircle,
+} from "react-icons/fa";
+import { FiXCircle } from "react-icons/fi";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
-  const { templates, isLoading: templatesLoading } = useSelector(
-    (state: RootState) => state.template
-  );
+  const {
+    templates,
+    isLoading: templatesLoading,
+    error: templatesError,
+    currentPage,
+    totalPages,
+  } = useSelector((state: RootState) => state.template);
   const { stats: adminStats, isLoading: adminStatsLoading } = useSelector(
     (state: RootState) => state.admin
   );
@@ -77,8 +84,6 @@ const AdminDashboard = () => {
   const tabFromUrl = queryParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "overview");
   const [templateSearch, setTemplateSearch] = useState("");
-  const [templatePage, setTemplatePage] = useState(1);
-  const itemsPerPage = 10;
   const [isAddTemplateOpen, setIsAddTemplateOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -90,21 +95,22 @@ const AdminDashboard = () => {
   useEffect(() => {
     dispatch(getAdminStats());
     if (activeTab === "templates") {
+      dispatch(clearError());
       dispatch(
         fetchTemplates({
-          page: templatePage,
-          limit: itemsPerPage,
-          search: templateSearch,
+          page: currentPage,
+          limit: 10,
+          search: templateSearch || undefined,
         })
       );
     }
-  }, [dispatch, activeTab, templatePage]);
+  }, [dispatch, activeTab, currentPage, templateSearch]);
 
   useEffect(() => {
     const newParams = new URLSearchParams(location.search);
     newParams.set("tab", activeTab);
     navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
-  }, [activeTab, navigate, location.pathname, location.search]);
+  }, [activeTab, navigate, location.pathname]);
 
   useEffect(() => {
     if (statusMessage) {
@@ -115,28 +121,13 @@ const AdminDashboard = () => {
     }
   }, [statusMessage]);
 
-  useEffect(() => {
-    if (activeTab === "templates") {
-      const timeoutId = setTimeout(() => {
-        dispatch(
-          fetchTemplates({
-            page: 1,
-            limit: itemsPerPage,
-            search: templateSearch,
-          })
-        );
-        setTemplatePage(1);
-      }, 500);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [templateSearch, dispatch, activeTab]);
-
   const handleTemplateSuccess = () => {
     setIsAddTemplateOpen(false);
+    dispatch(setCurrentPage(1));
     dispatch(
       fetchTemplates({
-        page: templatePage,
-        limit: itemsPerPage,
+        page: 1,
+        limit: 10,
         search: templateSearch,
       })
     );
@@ -147,6 +138,7 @@ const AdminDashboard = () => {
   };
 
   const viewTemplate = (template: any) => {
+    console.log("Selected template:", template);
     setSelectedItem(template);
     setIsViewDialogOpen(true);
   };
@@ -160,8 +152,8 @@ const AdminDashboard = () => {
       });
       dispatch(
         fetchTemplates({
-          page: templatePage,
-          limit: itemsPerPage,
+          page: currentPage,
+          limit: 10,
           search: templateSearch,
         })
       );
@@ -173,7 +165,17 @@ const AdminDashboard = () => {
     }
   };
 
-  const getTotalPages = (total: number) => Math.ceil(total / itemsPerPage);
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      dispatch(setCurrentPage(currentPage - 1));
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      dispatch(setCurrentPage(currentPage + 1));
+    }
+  };
 
   return (
     <div className="container px-4 mx-auto py-8">
@@ -198,6 +200,20 @@ const AdminDashboard = () => {
             <FiXCircle className="size-5" />
           )}
           <span>{statusMessage.message}</span>
+        </div>
+      )}
+
+      {templatesError && (
+        <div className="mb-6 p-4 rounded-md bg-red-50 text-red-800 border border-red-200 flex items-center gap-2">
+          <FiXCircle className="size-5" />
+          <span>{templatesError}</span>
+          <Button
+            variant="link"
+            className="ml-4"
+            onClick={() => dispatch(clearError())}
+          >
+            Clear Error
+          </Button>
         </div>
       )}
 
@@ -257,8 +273,8 @@ const AdminDashboard = () => {
       <div className="space-y-6">
         {activeTab === "overview" && (
           <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2  lg:grid-cols-3">
-              <Card className="bg-primary/5 border-primary/20 ">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <Card className="bg-primary/5 border-primary/20">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium">
                     Total Users
@@ -403,7 +419,10 @@ const AdminDashboard = () => {
                         placeholder="Search templates..."
                         className="pl-8 w-full sm:w-[200px]"
                         value={templateSearch}
-                        onChange={(e) => setTemplateSearch(e.target.value)}
+                        onChange={(e) => {
+                          setTemplateSearch(e.target.value);
+                          dispatch(setCurrentPage(1));
+                        }}
                       />
                     </div>
                     <Dialog
@@ -435,7 +454,7 @@ const AdminDashboard = () => {
               <CardContent>
                 {templatesLoading ? (
                   <div className="text-center py-8">Loading templates...</div>
-                ) : (
+                ) : templates.length > 0 ? (
                   <div className="space-y-4">
                     {templates.map((template) => (
                       <div
@@ -507,49 +526,48 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     ))}
+                    <div className="flex justify-between items-center mt-6">
+                      <Button
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1 || templatesLoading}
+                        variant="outline"
+                      >
+                        Previous
+                      </Button>
+                      <span>
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        onClick={handleNextPage}
+                        disabled={
+                          currentPage === totalPages || templatesLoading
+                        }
+                        variant="outline"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <FaFileAlt className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">
+                      No templates found
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      Try adjusting your search to find what you're looking for
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setTemplateSearch("");
+                        dispatch(setCurrentPage(1));
+                        dispatch(clearError());
+                      }}
+                    >
+                      Clear Search
+                    </Button>
                   </div>
                 )}
-                <div className="flex items-center justify-between mt-6">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {(templatePage - 1) * itemsPerPage + 1} to{" "}
-                    {Math.min(templatePage * itemsPerPage, templates.length)} of{" "}
-                    {templates.length} templates
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setTemplatePage(Math.max(1, templatePage - 1))
-                      }
-                      disabled={templatePage === 1}
-                    >
-                      <FaChevronLeft className="size-4" />
-                      Previous
-                    </Button>
-                    <span className="text-sm">
-                      Page {templatePage} of {getTotalPages(templates.length)}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setTemplatePage(
-                          Math.min(
-                            getTotalPages(templates.length),
-                            templatePage + 1
-                          )
-                        )
-                      }
-                      disabled={
-                        templatePage === getTotalPages(templates.length)
-                      }
-                    >
-                      Next
-                      <FaChevronRight className="size-4" />
-                    </Button>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -579,73 +597,77 @@ const AdminDashboard = () => {
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedItem?.name || selectedItem?.title || "Details"}
+              {selectedItem?.name || selectedItem?.title || "Template Details"}
             </DialogTitle>
-            <DialogDescription>{selectedItem?.description}</DialogDescription>
+            <DialogDescription>
+              {selectedItem?.description || "No description available"}
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            {selectedItem && (
+            {selectedItem ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Language</Label>
                     <p className="text-sm text-muted-foreground">
-                      {selectedItem.language}
+                      {selectedItem.language || "N/A"}
                     </p>
                   </div>
-                  {selectedItem.framework && (
-                    <div>
-                      <Label>Framework</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedItem.framework}
-                      </p>
-                    </div>
-                  )}
-                  {selectedItem.category && (
-                    <div>
-                      <Label>Category</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedItem.category}
-                      </p>
-                    </div>
-                  )}
+                  <div>
+                    <Label>Framework</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedItem.framework || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Category</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedItem.category || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Downloads</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedItem.downloads || 0}
+                    </p>
+                  </div>
                 </div>
 
-                {selectedItem.code && (
-                  <div>
-                    <Label>Code</Label>
-                    <pre className="bg-muted p-4 rounded text-sm overflow-auto max-h-64 mt-2">
-                      <code>{selectedItem.code}</code>
-                    </pre>
-                  </div>
-                )}
-
-                {selectedItem.files && selectedItem.files.length > 0 && (
+                {selectedItem.files && selectedItem.files.length > 0 ? (
                   <div>
                     <Label>Files</Label>
                     <div className="space-y-2 mt-2">
-                      {selectedItem.files.map((file: any) => (
-                        <div key={file.id} className="border rounded p-3">
-                          <p className="font-medium">{file.name}</p>
-                          {file.children &&
-                            file.children.map((child: any) => (
-                              <div key={child.id} className="mt-2 ml-4">
-                                <p className="text-sm font-medium">
-                                  {child.name}
-                                </p>
-                                {child.content && (
-                                  <pre className="bg-muted p-2 rounded text-xs overflow-auto max-h-32 mt-1">
-                                    <code>{child.content}</code>
-                                  </pre>
-                                )}
-                              </div>
-                            ))}
+                      {selectedItem.files.map((file: any, index: number) => (
+                        <div
+                          key={file._id || index}
+                          className="border rounded p-3"
+                        >
+                          <p className="font-medium">
+                            {file.name || "Unnamed File"}
+                          </p>
+                          {file.content ? (
+                            <pre className="bg-muted p-4 rounded text-sm overflow-auto max-h-64 mt-2 whitespace-pre-wrap">
+                              <code>{file.content}</code>
+                            </pre>
+                          ) : (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              No content available for this file
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
                   </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No files available
+                  </p>
                 )}
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No template selected
+              </p>
             )}
           </div>
         </DialogContent>

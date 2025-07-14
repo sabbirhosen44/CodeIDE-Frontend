@@ -203,3 +203,45 @@ export const EDITOR_THEMES = [
   { value: "material-lighter", label: "Material Lighter" },
   { value: "material-palenight", label: "Material Palenight" },
 ];
+
+// Platform supported languages
+export const supportedLanguages = [
+  "JavaScript",
+  "TypeScript",
+  "Python",
+  "Java",
+  "C",
+  "C++",
+  "C#",
+  "PHP",
+  "Ruby",
+  "Go",
+  "Rust",
+  "Swift",
+  "Kotlin",
+] as const;
+
+// Platform supported categories
+export const supportedCategories = [
+  "Frontend",
+  "Backend",
+  "Full Stack",
+  "Mobile",
+  "Desktop",
+  "Standalone",
+  "Library",
+  "Framework",
+] as const;
+
+// Platform supported frameworks
+export const supportedFrameworks = [
+  "None",
+  "React",
+  "Next.js",
+  "Vue",
+  "Angular",
+  "Express",
+  "Django",
+  "Spring",
+  "Laravel",
+] as const;

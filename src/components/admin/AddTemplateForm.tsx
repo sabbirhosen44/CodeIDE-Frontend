@@ -19,6 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  supportedCategories,
+  supportedFrameworks,
+  supportedLanguages,
+} from "@/constants";
 import type { AppDispatch, RootState } from "@/store";
 import { createTemplate } from "@/store/slices/templateSlice";
 import type { TemplateFile } from "@/types";
@@ -28,45 +33,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { z } from "zod";
-
-const supportedLanguages = [
-  "JavaScript",
-  "TypeScript",
-  "Python",
-  "Java",
-  "C",
-  "C++",
-  "C#",
-  "PHP",
-  "Ruby",
-  "Go",
-  "Rust",
-  "Swift",
-  "Kotlin",
-] as const;
-
-const supportedCategories = [
-  "Frontend",
-  "Backend",
-  "Full Stack",
-  "Mobile",
-  "Desktop",
-  "Standalone",
-  "Library",
-  "Framework",
-] as const;
-
-const supportedFrameworks = [
-  "None",
-  "React",
-  "Next.js",
-  "Vue",
-  "Angular",
-  "Express",
-  "Django",
-  "Spring",
-  "Laravel",
-] as const;
 
 const templateSchema = z.object({
   name: z
