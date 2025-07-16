@@ -1,16 +1,11 @@
-import EditorSettingsPanel from "@/components/editor/EditorSettingsPanel";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,205 +19,332 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { EDITOR_THEMES } from "@/constants";
-import { useToast } from "@/hooks/use-toast";
 import Editor from "@monaco-editor/react";
-import { useEffect, useState } from "react";
-import { FaRegEye, FaRegSave } from "react-icons/fa";
+import OutputConsole from "../../components/editor/OutputConsole";
+import EditorSettingsPanel from "@/components/editor/EditorSettingsPanel";
+import AIAssistant from "@/components/ai/AiAssistant";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "@/store";
+import {
+  fetchProjectById,
+  updateProject,
+  clearCurrentProject,
+} from "@/store/slices/projectSlice";
+import { loadUser } from "@/store/slices/authSlice";
+import { EDITOR_THEMES, LANGUAGE_MAP } from "@/constants";
+import type { EditorSettings, TemplateFile } from "@/types";
 import {
   FiArrowLeft,
   FiLoader,
   FiMaximize,
   FiMinimize,
   FiPlay,
-  FiPlus,
   FiSettings,
-  FiUsers,
+  FiMessageSquare,
 } from "react-icons/fi";
-import {
-  LuPanelBottom,
-  LuPanelLeft,
-  LuPanelRight,
-  LuSquareTerminal,
-} from "react-icons/lu";
+import { PanelBottomIcon as LuPanelBottom } from "lucide-react";
 import { RxCross2 } from "react-icons/rx";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import FileExplorer from "./FileExplorer";
-import { MOCK_TEMPLATES } from "@/mockdata";
-import { EditorSettings } from "@/types";
-import OutputConsole from "./OutputConsole";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
 
 const EditorPage = () => {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const [currentTemplate, setCurrentTemplate] = useState<any>(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [searchParams] = useSearchParams();
+  const {
+    isAuthenticated,
+    isLoading: authLoading,
+    user,
+  } = useSelector((state: RootState) => state.auth);
+  const {
+    currentProject,
+    isLoading: projectLoading,
+    error: projectError,
+  } = useSelector((state: RootState) => state.project);
+
   const [isRunning, setIsRunning] = useState(false);
   const [activeTab, setActiveTab] = useState("editor");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isFileExplorerVisible, setIsFileExplorerVisible] = useState(true);
   const [isConsoleVisible, setIsConsoleVisible] = useState(true);
-  const [isTerminalVisible, setIsTerminalVisible] = useState(true);
-  const [activeFile, setActiveFile] = useState<any>(null);
-  const [editorSettings, setEditorSettings] = useState<EditorSettings>({
-    theme: "vs-dark",
-    fontSize: 14,
-    tabSize: 2,
-    wordWrap: "on",
-    lineNumbers: "on",
-    miniMap: {
-      enabled: true,
-    },
-    autoIndent: "advanced",
-    formatOnPaste: true,
-    formatOnType: true,
-    snippetSuggestions: "inline",
-    codeLens: true,
-    cursorBlinking: "blink",
-    cursorStyle: "line",
-    cursorWidth: 2,
-    fontFamily: "Menlo, Monaco, 'Courier New', monospace",
-    fontLigatures: false,
-    lineHeight: 20,
-    letterSpacing: 0,
-    fontWeight: "normal",
-    smoothScrolling: true,
-    renderWhiteSpace: "none",
-    bracketPairColorization: { enabled: true },
-  });
-  const showToast = useToast();
-  const navigate = useNavigate();
+  const [isAIAssistantVisible, setIsAIAssistantVisible] = useState(false);
+  const [activeFile, setActiveFile] = useState<TemplateFile | null>(null);
 
-  // Mock collaborators with more detailed status
-  const [collaborators, setCollaborators] = useState([
-    {
-      id: 1,
-      name: "Jane Smith",
-      avatar: "/placeholder.svg?height=32&width=32",
-      status: "active",
-      role: "editor",
-      cursor: { line: 10, column: 15 },
-      lastActive: "Just now",
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      avatar: "/placeholder.svg?height=32&width=32",
-      status: "idle",
-      role: "viewer",
-      cursor: { line: 5, column: 8 },
-      lastActive: "5 minutes ago",
-    },
+  const [editorSettings, setEditorSettings] = useState<EditorSettings>(() => {
+    const savedSettings = localStorage.getItem("editorSettings");
+    const defaultSettings = {
+      theme: "vs-dark",
+      fontSize: 14,
+      tabSize: 2,
+      wordWrap: "on",
+      lineNumbers: "on",
+      miniMap: { enabled: true },
+      autoIndent: "advanced",
+      formatOnPaste: true,
+      formatOnType: true,
+      formatOnSave: false,
+      snippetSuggestions: "inline",
+      codeLens: true,
+      cursorBlinking: "blink",
+      cursorStyle: "line",
+      cursorWidth: 2,
+      fontFamily: "'Consolas', 'Courier New', monospace",
+      fontLigatures: false,
+      lineHeight: 1.5,
+      letterSpacing: 0,
+      fontWeight: "normal",
+      smoothScrolling: true,
+      renderWhitespace: "none",
+      bracketPairColorization: { enabled: true },
+      autoSave: true,
+      detectIndentation: true,
+      trimTrailingWhitespace: false,
+      insertFinalNewline: false,
+    };
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        return { ...defaultSettings, ...parsed };
+      } catch (error) {
+        return defaultSettings;
+      }
+    }
+    return defaultSettings;
+  });
+
+  useEffect(() => {
+    const projectId = searchParams.get("project");
+    const token = localStorage.getItem("token");
+
+    if (!projectId || (currentProject && currentProject._id !== projectId)) {
+      dispatch(clearCurrentProject());
+      setActiveFile(null);
+    }
+
+    if (!projectId) {
+      navigate("/templates");
+      return;
+    }
+
+    if (token && !isAuthenticated && !authLoading) {
+      dispatch(loadUser());
+      return;
+    }
+
+    if (!token && !isAuthenticated && !authLoading) {
+      navigate("/login");
+      return;
+    }
+
+    if (user?.role === "admin") {
+      navigate("/templates");
+      return;
+    }
+
+    if (
+      isAuthenticated &&
+      projectId &&
+      !authLoading &&
+      (!currentProject || currentProject._id !== projectId)
+    ) {
+      dispatch(fetchProjectById(projectId));
+    }
+  }, [
+    searchParams.get("project"),
+    dispatch,
+    navigate,
+    isAuthenticated,
+    authLoading,
+    user,
   ]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      showToast(
-        "Authentication required. Please log in to use the editor.",
-        "error"
+    if (
+      currentProject &&
+      currentProject.files &&
+      currentProject.files.length > 0
+    ) {
+      setActiveFile(currentProject.files[0]);
+    } else {
+      setActiveFile(null);
+    }
+  }, [currentProject]);
+
+  useEffect(() => {
+    if (
+      editorSettings.autoSave &&
+      activeFile &&
+      currentProject &&
+      activeFile.content !== undefined
+    ) {
+      const handler = setTimeout(() => {
+        const fileIndex = currentProject.files.findIndex(
+          (file) => file.id === activeFile.id
+        );
+
+        if (fileIndex !== -1) {
+          const updatedFiles = currentProject.files.map((file, idx) =>
+            idx === fileIndex ? { ...file, content: activeFile.content } : file
+          );
+
+          dispatch(
+            updateProject({
+              projectId: currentProject._id,
+              projectData: { files: updatedFiles },
+            })
+          );
+        }
+      }, 1000);
+
+      return () => {
+        clearTimeout(handler);
+      };
+    }
+  }, [
+    activeFile?.content,
+    editorSettings.autoSave,
+    dispatch,
+    activeFile,
+    currentProject,
+  ]);
+
+  const handleCodeChange = (newCode: string | undefined) => {
+    if (newCode === undefined || !activeFile) return;
+    setActiveFile((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, content: newCode };
+      return updated;
+    });
+  };
+
+  const handleApplyAICode = (code: string) => {
+    if (!activeFile) return;
+    setActiveFile((prev) => {
+      if (!prev) return null;
+      return { ...prev, content: code };
+    });
+  };
+
+  const handleEditorSettingsChange = (newSettings: Partial<EditorSettings>) => {
+    const updatedSettings = { ...editorSettings, ...newSettings };
+    setEditorSettings(updatedSettings);
+    localStorage.setItem("editorSettings", JSON.stringify(updatedSettings));
+  };
+
+  const handleSaveFile = async () => {
+    if (!activeFile || !currentProject) {
+      return;
+    }
+
+    const fileIndex = currentProject.files.findIndex(
+      (file) => file.id === activeFile.id
+    );
+
+    if (fileIndex === -1) {
+      return;
+    }
+
+    const updatedFiles = currentProject.files.map((file, idx) =>
+      idx === fileIndex ? { ...file, content: activeFile.content } : file
+    );
+
+    try {
+      const result = await dispatch(
+        updateProject({
+          projectId: currentProject._id,
+          projectData: { files: updatedFiles },
+        })
       );
-
-      navigate("/login");
-    }
-
-    const templateId = searchParams.get("template");
-    if (templateId) {
-      const template = MOCK_TEMPLATES.find((t) => t._id === templateId);
-
-      if (template) {
-        setCurrentTemplate(template);
-        setActiveFile(template.files[0]);
+      if (!updateProject.fulfilled.match(result)) {
+        throw new Error(result.payload as string);
       }
-    }
-  }, [searchParams]);
-
-  const toggleFileExplorer = () => {
-    setIsFileExplorerVisible(!isFileExplorerVisible);
+    } catch (error: any) {}
   };
 
-  const toggleConsole = () => {
-    setIsConsoleVisible(!isConsoleVisible);
-  };
-
-  const toggleTerminal = () => {
-    setIsTerminalVisible(!isTerminalVisible);
-  };
-
-  const removeCollaborator = (id: number) => {
-    setCollaborators(collaborators.filter((item) => item.id !== id));
-    showToast("Collaborator removed", "success");
-  };
-
-  const addCollaborator = (name: string, role: string) => {
-    const newCollaborator = {
-      id: collaborators.length + 1,
-      name,
-      avatar: "/placeholder.svg?height=32&width=32",
-      status: "active",
-      role,
-      cursor: { line: 1, column: 1 },
-      lastActive: "Just now",
-    };
-
-    setCollaborators([...collaborators, newCollaborator]);
-    showToast(`${name} added as a collaborator`, "success");
+  const getFileLanguage = (fileName: string): string => {
+    const extension = fileName.split(".").pop()?.toLowerCase() || "";
+    return LANGUAGE_MAP[extension] || "plaintext";
   };
 
   const handleRun = () => {
+    if (!isConsoleVisible) {
+      setIsConsoleVisible(true);
+    }
     setIsRunning(true);
   };
 
-  const handlePreview = () => {
-    setActiveTab("preview");
-
-    showToast("Preview generated successfully", "success");
+  const handleRunComplete = () => {
+    setIsRunning(false);
   };
 
-  const handleSave = () => {
-    showToast("Project saved successfully", "success");
-  };
+  const toggleConsole = () => setIsConsoleVisible(!isConsoleVisible);
+  const toggleAIAssistant = () =>
+    setIsAIAssistantVisible(!isAIAssistantVisible);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        showToast(
-          `Error attempting to enable fullscreen : ${err.message}`,
-          "error"
-        );
-      });
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
     } else {
       if (document.exitFullscreen) {
         document.exitFullscreen();
       }
+      setIsFullscreen(false);
     }
   };
 
+  if (authLoading || (projectLoading && !currentProject)) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <FiLoader className="size-8 animate-spin mx-auto mb-4" />
+          <p className="text-lg">Loading project...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (projectError) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-lg mb-4 text-red-600">Error: {projectError}</p>
+          <Button onClick={() => navigate("/templates")}>
+            Back to Templates
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentProject) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-lg mb-4">Project not found</p>
+          <Button onClick={() => navigate("/templates")}>
+            Back to Templates
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="px-4 flex flex-col">
+    <div className="flex flex-col h-screen">
       <div className="border-b p-2 flex items-center justify-between bg-background">
         <div className="flex items-center">
           <Button
@@ -230,32 +352,11 @@ const EditorPage = () => {
             className="p-2 mr-2"
             onClick={() => navigate("/templates")}
           >
-            <FiArrowLeft className=" size-4" />
+            <FiArrowLeft className="size-4" />
           </Button>
-          <h1 className="text-lg font-semibold mr-4">
-            {currentTemplate ? currentTemplate.name : "New Project"}
-          </h1>
+          <h1 className="text-lg font-semibold mr-4">{currentProject.name}</h1>
           <TooltipProvider>
             <div className="flex items-center space-x-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="size-8"
-                    onClick={toggleFileExplorer}
-                  >
-                    {isFileExplorerVisible ? (
-                      <LuPanelLeft className="size-4" />
-                    ) : (
-                      <LuPanelRight className="size-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isFileExplorerVisible ? "Hide explorer" : "Show explorer"}
-                </TooltipContent>
-              </Tooltip>
-
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -270,153 +371,29 @@ const EditorPage = () => {
                   {isConsoleVisible ? "Hide console" : "Show console"}
                 </TooltipContent>
               </Tooltip>
-
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    onClick={toggleTerminal}
-                    className="size-8"
+                    className={`size-8 ${isAIAssistantVisible ? "bg-accent" : ""}`}
+                    onClick={toggleAIAssistant}
                   >
-                    <LuSquareTerminal className="size-4" />
+                    <FiMessageSquare className="size-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {isTerminalVisible ? "Hide terminal" : "Show terminal"}
+                  {isAIAssistantVisible
+                    ? "Hide AI Assistant"
+                    : "Show AI Assistant"}
                 </TooltipContent>
               </Tooltip>
             </div>
           </TooltipProvider>
         </div>
         <div className="flex items-center space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="outline" size="sm" className="gap-2">
-                <FiUsers className="size-4" />
-                <span>Collaborators</span>
-                <Badge variant="secondary" className="ml-1">
-                  {collaborators.length}
-                </Badge>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72">
-              <DropdownMenuLabel>Collaborators</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {collaborators.map((collaborator) => (
-                <DropdownMenuItem
-                  key={collaborator.id}
-                  className="flex items-center gap-2 py-2"
-                >
-                  <div className="relative">
-                    <Avatar>
-                      <AvatarImage
-                        src={collaborator.avatar}
-                        alt={collaborator.name}
-                      />
-                      <AvatarFallback>
-                        {collaborator.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div
-                      className={`absolute -bottom-1 -right-1 size-3 rounded-full border-2 border-background ${
-                        collaborator.status === "active"
-                          ? "bg-green-500"
-                          : "bg-yellow-500"
-                      }`}
-                    ></div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{collaborator.name}</p>
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <Badge variant="outline" className="mr-1 px-1 py-0  h-4">
-                        {collaborator.role}
-                      </Badge>
-                      <span>{collaborator.lastActive}</span>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    className="size-6 ml-auto"
-                    onClick={() => removeCollaborator(collaborator.id)}
-                  >
-                    <RxCross2 className="size-3" />
-                  </Button>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start p-2 h-auto font-normal text-sm"
-                  >
-                    <FiPlus className="size-3 mr-2" />
-                    Invite Collaborator
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Invite Collaborator</DialogTitle>
-                    <DialogDescription>
-                      Add a new collaborator to your project
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">
-                        Name
-                      </Label>
-                      <Input
-                        id="name"
-                        placeholder="Enter name"
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="email" className="text-right">
-                        Email
-                      </Label>
-                      <Input
-                        id="email"
-                        placeholder="Enter email"
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="role" className="text-right">
-                        Role
-                      </Label>
-                      <Select>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Editor</SelectLabel>
-                            <SelectItem value="editor">Editor</SelectItem>
-                            <SelectItem value="viewer">Viewer</SelectItem>
-                            <SelectItem value="commenter">Commenter</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      onClick={() => {
-                        addCollaborator("Alex", "editor");
-                      }}
-                    >
-                      Send Invitation
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Editor Settings */}
+          <Button variant="outline" size="sm" onClick={handleSaveFile}>
+            Save Code
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -426,13 +403,15 @@ const EditorPage = () => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Editor Settings</DropdownMenuLabel>
               <DropdownMenuSeparator />
-
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <span>Theme</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuRadioGroup>
+                <DropdownMenuSubTrigger>Theme</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuRadioGroup
+                    value={editorSettings.theme}
+                    onValueChange={(value) =>
+                      handleEditorSettingsChange({ theme: value })
+                    }
+                  >
                     {EDITOR_THEMES.map((theme) => (
                       <DropdownMenuRadioItem
                         key={theme.value}
@@ -442,14 +421,19 @@ const EditorPage = () => {
                       </DropdownMenuRadioItem>
                     ))}
                   </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
+                </DropdownMenuSubContent>
               </DropdownMenuSub>
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <span>Font Size</span>
-                </DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger>Font Size</DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
-                  <DropdownMenuRadioGroup>
+                  <DropdownMenuRadioGroup
+                    value={editorSettings.fontSize.toString()}
+                    onValueChange={(value) =>
+                      handleEditorSettingsChange({
+                        fontSize: Number.parseInt(value),
+                      })
+                    }
+                  >
                     {[12, 14, 16, 18, 20, 22, 24].map((size) => (
                       <DropdownMenuRadioItem key={size} value={size.toString()}>
                         {size}px
@@ -458,65 +442,35 @@ const EditorPage = () => {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
-
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <span>Tab Size</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuRadioGroup>
-                    <DropdownMenuRadioItem value="2">
-                      2 spaces
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="4">
-                      4 spaces
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="8">
-                      8 spaces
-                    </DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <span>Font Family</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuRadioGroup>
-                    <DropdownMenuRadioItem value="Menlo, Monaco, 'Courier New', monospace">
-                      Monospace
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="'Fira Code', monospace">
-                      Fira Code
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="'Source Code Pro', monospace">
-                      Source Code Pro
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="'JetBrains Mono', monospace">
-                      JetBrains Mono
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="'Cascadia Code', monospace">
-                      Cascadia Code
-                    </DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-
               <DropdownMenuSeparator />
-
-              <DropdownMenuItem>word wrap : 1</DropdownMenuItem>
-
-              <DropdownMenuItem>Minimap: visible</DropdownMenuItem>
-
-              <DropdownMenuItem>Line Numbers: off</DropdownMenuItem>
-
-              <DropdownMenuItem>
-                Bracket Pair Colorization: off
+              <DropdownMenuItem
+                onClick={() =>
+                  handleEditorSettingsChange({
+                    wordWrap: editorSettings.wordWrap === "on" ? "off" : "on",
+                  })
+                }
+              >
+                Word Wrap: {editorSettings.wordWrap}
               </DropdownMenuItem>
-
+              <DropdownMenuItem
+                onClick={() =>
+                  handleEditorSettingsChange({
+                    miniMap: { enabled: !editorSettings.miniMap.enabled },
+                  })
+                }
+              >
+                Minimap: {editorSettings.miniMap.enabled ? "visible" : "hidden"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  handleEditorSettingsChange({
+                    autoSave: !editorSettings.autoSave,
+                  })
+                }
+              >
+                Auto Save: {editorSettings.autoSave ? "On" : "Off"}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-
               <Dialog>
                 <DialogTrigger asChild>
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -531,7 +485,10 @@ const EditorPage = () => {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-6 py-4 max-h-[60vh] overflow-y-auto">
-                    <EditorSettingsPanel />
+                    <EditorSettingsPanel
+                      settings={editorSettings}
+                      onSettingsChange={handleEditorSettingsChange}
+                    />
                   </div>
                   <DialogFooter>
                     <Button>Save Changes</Button>
@@ -540,7 +497,6 @@ const EditorPage = () => {
               </Dialog>
             </DropdownMenuContent>
           </DropdownMenu>
-
           <Button
             variant="default"
             size="sm"
@@ -559,17 +515,6 @@ const EditorPage = () => {
               </>
             )}
           </Button>
-
-          <Button size="sm" variant="outline" onClick={handlePreview}>
-            <FaRegEye className="h-4 w-4 mr-2" />
-            Preview
-          </Button>
-
-          <Button size="sm" variant="outline" onClick={handleSave}>
-            <FaRegSave className="h-4 w-4 mr-2" />
-            Save
-          </Button>
-
           <Button size="sm" variant="ghost" onClick={toggleFullscreen}>
             {isFullscreen ? (
               <FiMinimize className="size-4" />
@@ -579,128 +524,127 @@ const EditorPage = () => {
           </Button>
         </div>
       </div>
-
-      {/* Editor Layout */}
-      <div className="flex h-screen overflow-hidden">
-        <ResizablePanelGroup direction="horizontal">
-          {isFileExplorerVisible && (
-            <>
-              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-                <div className="h-full border-r">
-                  <FileExplorer />
-                </div>
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-            </>
-          )}
-
-          <ResizablePanel defaultSize={isFileExplorerVisible ? 60 : 80}>
-            <ResizablePanelGroup direction="vertical">
-              <ResizablePanel
-                defaultSize={isConsoleVisible || isTerminalVisible ? 70 : 100}
-              >
-                <Tabs defaultValue="editor" className="h-full flex flex-col">
+      <div className="flex-1 overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          <ResizablePanel defaultSize={isAIAssistantVisible ? 70 : 100}>
+            <ResizablePanelGroup direction="vertical" className="h-full">
+              <ResizablePanel defaultSize={30} minSize={20} maxSize={80}>
+                <Tabs
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  className="h-full flex flex-col"
+                >
                   <div className="border-b px-4">
                     <TabsList>
                       <TabsTrigger value="editor">Editor</TabsTrigger>
-                      <TabsTrigger value="preview">Preview</TabsTrigger>
                     </TabsList>
                   </div>
                   <TabsContent value="editor" className="flex-1">
-                    {activeFile && (
+                    {activeFile ? (
                       <Editor
                         height="100%"
-                        language={
-                          activeFile.name.split(".").pop() || "javascript"
-                        }
+                        language={getFileLanguage(activeFile.name)}
                         value={activeFile.content}
+                        onChange={handleCodeChange}
                         theme={editorSettings.theme}
                         options={{
                           fontSize: editorSettings.fontSize,
                           fontFamily: editorSettings.fontFamily,
-                          lineHeight: editorSettings.lineHeight,
-                          letterSpacing: editorSettings.letterSpacing,
+                          fontLigatures: editorSettings.fontLigatures,
                           tabSize: editorSettings.tabSize,
+                          insertSpaces: true,
                           wordWrap: editorSettings.wordWrap,
-                          minimap: editorSettings.miniMap,
                           lineNumbers: editorSettings.lineNumbers,
+                          minimap: editorSettings.miniMap,
                           formatOnPaste: editorSettings.formatOnPaste,
                           formatOnType: editorSettings.formatOnType,
-                          autoIndent: editorSettings.autoIndent
-                            ? "advanced"
-                            : "none",
-                          codeLens: editorSettings.codeLens,
-                          cursorBlinking: editorSettings.cursorBlinking,
                           cursorStyle: editorSettings.cursorStyle,
-                          cursorWidth: editorSettings.cursorWidth,
-                          fontLigatures: editorSettings.fontLigatures,
-                          fontWeight: editorSettings.fontWeight,
-                          renderWhitespace: editorSettings.renderWhiteSpace,
-                          smoothScrolling: editorSettings.smoothScrolling,
+                          cursorBlinking: editorSettings.cursorBlinking,
+                          renderWhitespace: editorSettings.renderWhitespace,
                           bracketPairColorization:
                             editorSettings.bracketPairColorization,
+                          lineHeight: editorSettings.lineHeight,
+                          letterSpacing: editorSettings.letterSpacing,
                           scrollBeyondLastLine: false,
                           automaticLayout: true,
+                          colorDecorators: true,
+                          contextmenu: true,
+                          copyWithSyntaxHighlighting: true,
+                          detectIndentation: editorSettings.detectIndentation,
+                          trimAutoWhitespace:
+                            editorSettings.trimTrailingWhitespace,
+                          smoothScrolling: true,
+                          mouseWheelZoom: true,
+                          multiCursorModifier: "ctrlCmd",
+                          suggestOnTriggerCharacters: true,
+                          acceptSuggestionOnEnter: "on",
+                          tabCompletion: "on",
+                          wordBasedSuggestions: true,
+                          parameterHints: { enabled: true },
+                          autoIndent: "advanced",
+                          formatOnSave: editorSettings.formatOnSave,
                         }}
                       />
+                    ) : (
+                      <div className="flex items-center justify-center h-full bg-gray-50">
+                        <div className="text-center">
+                          <p className="text-gray-500 mb-2">No file selected</p>
+                          <p className="text-sm text-gray-400">
+                            Start coding in the editor
+                          </p>
+                        </div>
+                      </div>
                     )}
-                  </TabsContent>
-                  <TabsContent value="preview" className="flex-1">
-                    <iframe
-                      src="https//:localhost:8000"
-                      className="w-full h-full border-0"
-                      title="preview"
-                    />
                   </TabsContent>
                 </Tabs>
               </ResizablePanel>
-              {(isConsoleVisible || isTerminalVisible) && (
+              {isConsoleVisible && (
                 <>
                   <ResizableHandle withHandle />
-                  <ResizablePanel defaultSize={30}>
-                    <Tabs
-                      defaultValue="console"
-                      className="h-full flex flex-col"
-                    >
-                      <div className="border-b px-4 flex items-center">
-                        <TabsList>
-                          {isConsoleVisible && (
-                            <TabsTrigger value="console">Output</TabsTrigger>
-                          )}
-                          {isTerminalVisible && (
-                            <TabsTrigger value="terminal">Terminal</TabsTrigger>
-                          )}
-                        </TabsList>
+                  <ResizablePanel
+                    defaultSize={30}
+                    minSize={20}
+                    className="min-h-0"
+                  >
+                    {" "}
+                    {/* Added min-h-0 here */}
+                    <div className="h-full flex flex-col">
+                      <div className="border-b px-4 py-2 flex items-center justify-between">
+                        <h3 className="text-sm font-semibold">Output</h3>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="size-8"
-                          onClick={() => {
-                            if (isConsoleVisible && isTerminalVisible) {
-                              setIsConsoleVisible(false);
-                              setIsTerminalVisible(false);
-                            }
-                          }}
+                          onClick={toggleConsole}
                         >
                           <RxCross2 className="size-4" />
                         </Button>
                       </div>
-                      <TabsContent value="console" className="flex-1">
-                        <OutputConsole />
-                      </TabsContent>
-                      {isTerminalVisible && (
-                        <TabsContent value="terminal" className="flex-1 p-0">
-                          <div className="h-full bg-[#1e1e1e] text-white font-mono text-sm">
-                            <div className="h-full w-full" />
-                          </div>
-                        </TabsContent>
-                      )}
-                    </Tabs>
+                      <div className="flex-1">
+                        <OutputConsole
+                          activeFile={activeFile}
+                          isRunning={isRunning}
+                          onRunComplete={handleRunComplete}
+                        />
+                      </div>
+                    </div>
                   </ResizablePanel>
                 </>
               )}
             </ResizablePanelGroup>
           </ResizablePanel>
+          {isAIAssistantVisible && (
+            <>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={30} minSize={25} maxSize={40}>
+                <AIAssistant
+                  activeFile={activeFile}
+                  onClose={toggleAIAssistant}
+                  onApplyCode={handleApplyAICode}
+                />
+              </ResizablePanel>
+            </>
+          )}
         </ResizablePanelGroup>
       </div>
     </div>

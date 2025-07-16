@@ -40,6 +40,7 @@ export interface EditorSettings {
   letterSpacing: number;
   fontWeight: string;
   smoothScrolling: boolean;
+  autoSave: boolean;
   renderWhiteSpace: "none" | "boundary" | "selection" | "all";
   bracketPairColorization: { enabled: boolean };
 }
@@ -106,4 +107,30 @@ export interface AdminStats {
   totalSnippets: number;
   userGrowth: Array<{ name: string; users: number }>;
   projectGrowth: Array<{ name: string; projects: number }>;
+}
+
+export interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  templateId: {
+    _id: string;
+    name: string;
+    language: string;
+    framework?: string;
+  };
+  files: TemplateFile[];
+  owner: string;
+  lastModified: string;
+  createdAt: string;
+}
+
+export interface ProjectState {
+  projects: Project[];
+  currentProject: Project | null;
+  isLoading: boolean;
+  error: string | null;
+  totalPages: number;
+  currentPage: number;
+  totalCount: number;
 }

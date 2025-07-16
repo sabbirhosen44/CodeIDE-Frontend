@@ -185,25 +185,6 @@ export const FAQs = [
   },
 ];
 
-export const EDITOR_THEMES = [
-  { value: "vs", label: "Light" },
-  { value: "vs-dark", label: "Dark" },
-  { value: "hc-black", label: "High Contrast Dark" },
-  { value: "hc-light", label: "High Contrast Light" },
-  { value: "monokai", label: "Monokai" },
-  { value: "github", label: "GitHub" },
-  { value: "solarized-dark", label: "Solarized Dark" },
-  { value: "solarized-light", label: "Solarized Light" },
-  { value: "dracula", label: "Dracula" },
-  { value: "nord", label: "Nord" },
-  { value: "ayu-dark", label: "Ayu Dark" },
-  { value: "ayu-light", label: "Ayu Light" },
-  { value: "github-dark", label: "GitHub Dark" },
-  { value: "material-darker", label: "Material Darker" },
-  { value: "material-lighter", label: "Material Lighter" },
-  { value: "material-palenight", label: "Material Palenight" },
-];
-
 // Platform supported languages
 export const supportedLanguages = [
   "JavaScript",
@@ -245,3 +226,38 @@ export const supportedFrameworks = [
   "Spring",
   "Laravel",
 ] as const;
+
+export const EDITOR_THEMES = [
+  { value: "vs", label: "Light" },
+  { value: "vs-dark", label: "Dark" },
+  { value: "hc-black", label: "High Contrast Dark" },
+  { value: "hc-light", label: "High Contrast Light" },
+];
+
+export const LANGUAGE_MAP: { [key: string]: string } = {
+  js: "javascript",
+  jsx: "javascript",
+  ts: "typescript",
+  tsx: "typescript",
+  py: "python",
+  java: "java",
+  c: "c",
+  cpp: "cpp",
+  cs: "csharp",
+  php: "php",
+  rb: "ruby",
+  go: "go",
+  rs: "rust",
+  swift: "swift",
+  kt: "kotlin",
+};
+
+export const EDITOR_FONT_SIZES = [
+  { value: 12, label: "12px" },
+  { value: 14, label: "14px" },
+  { value: 16, label: "16px" },
+  { value: 18, label: "18px" },
+  { value: 20, label: "20px" },
+  { value: 22, label: "22px" },
+  { value: 24, label: "24px" },
+];

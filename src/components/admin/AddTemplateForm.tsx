@@ -100,7 +100,7 @@ export default function AddTemplateForm({
     },
   });
 
-  const { watch, setValue, getValues } = form;
+  const { watch, setValue } = form;
   const watchedTags = watch("tags");
   const watchedFileName = watch("fileName");
   const watchedFileContent = watch("fileContent");

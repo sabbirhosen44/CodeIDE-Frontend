@@ -1,3 +1,4 @@
+import { AlertDialogHeader } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,7 +9,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -17,8 +27,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supportedLanguages, supportedFrameworks } from "@/constants";
+import { supportedFrameworks, supportedLanguages } from "@/constants";
+import { useToast } from "@/hooks/use-toast";
 import { AppDispatch, RootState } from "@/store";
+import { createProjectFromTemplate } from "@/store/slices/projectSlice";
 import { fetchTemplates, setCurrentPage } from "@/store/slices/templateSlice";
 import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
@@ -30,8 +42,14 @@ const TemplatesPage = () => {
   const { templates, isLoading, totalPages, currentPage } = useSelector(
     (state: RootState) => state.template
   );
+  const { user } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const showToast = useToast();
+  const [isCreating, setIsCreating] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [projectName, setProjectName] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [languageFilter, setLanguageFilter] = useState<string | undefined>(
     undefined
@@ -52,8 +70,48 @@ const TemplatesPage = () => {
     );
   }, [dispatch, searchQuery, languageFilter, frameworkFilter, currentPage]);
 
-  const handleUseTemplate = (templateId: string) => {
-    navigate(`/editor?template=${templateId}`);
+  const handleUseTemplate = (template: any) => {
+    setSelectedTemplate(template);
+    setProjectName(`My ${template.name} Project`);
+    setProjectDescription(`Project based on ${template.name} template`);
+  };
+
+  const handleCreateProject = async () => {
+    if (!selectedTemplate || !projectName.trim()) {
+      showToast("Please enter a project name", "error");
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      const result = await dispatch(
+        createProjectFromTemplate({
+          templateId: selectedTemplate._id,
+          name: projectName.trim(),
+          description: projectDescription.trim(),
+        })
+      );
+
+      if (createProjectFromTemplate.fulfilled.match(result)) {
+        const projectId = result.payload._id;
+        setSelectedTemplate(null);
+        setProjectName("");
+        setProjectDescription("");
+        navigate(`/editor?project=${projectId}`);
+      } else {
+        const errorMessage =
+          (result.payload as string) || "Failed to create project";
+        showToast(`Error: ${errorMessage}`, "error");
+      }
+    } catch (error: any) {
+      showToast(
+        `Error: ${error.message || "An unexpected error occurred"}`,
+        "error"
+      );
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleClearFilters = () => {
@@ -180,7 +238,7 @@ const TemplatesPage = () => {
                 </CardContent>
                 <CardFooter className="pt-3 border-t">
                   <Button
-                    onClick={() => handleUseTemplate(template._id)}
+                    onClick={() => handleUseTemplate(template)}
                     className="w-full"
                   >
                     Use Template
@@ -219,6 +277,55 @@ const TemplatesPage = () => {
           <Button onClick={handleClearFilters}>Clear filters</Button>
         </div>
       )}
+      <Dialog
+        open={!!selectedTemplate}
+        onOpenChange={() => setSelectedTemplate(null)}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Project</DialogTitle>
+            <DialogDescription>
+              Create a new project from the "{selectedTemplate?.name}" template.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="projectName" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="projectName"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                className="col-span-3"
+                placeholder="Enter project name"
+                disabled={isCreating}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="projectDescription" className="text-right">
+                Description
+              </Label>
+              <Input
+                id="projectDescription"
+                value={projectDescription}
+                onChange={(e) => setProjectDescription(e.target.value)}
+                className="col-span-3"
+                placeholder="Enter project description (optional)"
+                disabled={isCreating}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={handleCreateProject}
+              disabled={!projectName.trim() || isCreating}
+            >
+              {isCreating ? "Creating..." : "Create Project"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

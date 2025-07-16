@@ -3,6 +3,7 @@ import themeReducer from "./slices/themeSlice";
 import authReducer from "./slices/authSlice";
 import templateReducer from "./slices/templateSlice";
 import adminReducer from "./slices/adminSlice";
+import projectReducer from "./slices/projectSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     auth: authReducer,
     template: templateReducer,
     admin: adminReducer,
+    project: projectReducer,
   },
 });
 

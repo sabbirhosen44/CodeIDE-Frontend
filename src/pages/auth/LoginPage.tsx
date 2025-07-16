@@ -42,13 +42,11 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
-  const { isAuthenticated, isLoading, error, user } = useSelector(
+  const { isAuthenticated, isLoading, error } = useSelector(
     (state: RootState) => state.auth
   );
   const dispatch = useDispatch<AppDispatch>();
   const [isShowPassword, setIsShowPassword] = useState<boolean>(false);
-  const [isShowConfirmPassword, setIsShowConfirmPassword] =
-    useState<boolean>(false);
   const navigate = useNavigate();
 
   const {

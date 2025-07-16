@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Home } from "lucide-react";
 import { FaHome } from "react-icons/fa";
 import { FiArrowLeft } from "react-icons/fi";
 import { Link } from "react-router-dom";

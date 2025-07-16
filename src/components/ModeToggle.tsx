@@ -1,13 +1,7 @@
 import { useTheme } from "@/hooks/use-theme";
 import { FiMoon, FiSun } from "react-icons/fi";
 import { Button } from "./ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 const ModeToggle = () => {
   const { theme, setTheme } = useTheme();
