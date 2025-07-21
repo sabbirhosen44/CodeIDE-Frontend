@@ -82,6 +82,10 @@ const TemplatesPage = () => {
       return;
     }
 
+    if (!user) {
+      navigate("/login");
+    }
+
     setIsCreating(true);
 
     try {

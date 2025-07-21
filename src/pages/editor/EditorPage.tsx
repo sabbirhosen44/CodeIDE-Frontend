@@ -1,11 +1,16 @@
-import { useState, useEffect } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import AIAssistant from "@/components/ai/AiAssistant";
+import EditorSettingsPanel from "@/components/editor/EditorSettingsPanel";
 import { Button } from "@/components/ui/button";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,52 +24,53 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import Editor from "@monaco-editor/react";
-import OutputConsole from "../../components/editor/OutputConsole";
-import EditorSettingsPanel from "@/components/editor/EditorSettingsPanel";
-import AIAssistant from "@/components/ai/AiAssistant";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "@/store";
+import { EDITOR_THEMES, LANGUAGE_MAP } from "@/constants";
+import { useToast } from "@/hooks/use-toast";
+import type { AppDispatch, RootState } from "@/store";
+import { loadUser } from "@/store/slices/authSlice";
 import {
+  clearCurrentProject,
   fetchProjectById,
   updateProject,
-  clearCurrentProject,
 } from "@/store/slices/projectSlice";
-import { loadUser } from "@/store/slices/authSlice";
-import { EDITOR_THEMES, LANGUAGE_MAP } from "@/constants";
 import type { EditorSettings, TemplateFile } from "@/types";
+import Editor from "@monaco-editor/react";
+import { PanelBottomIcon as LuPanelBottom } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   FiArrowLeft,
   FiLoader,
   FiMaximize,
+  FiMessageSquare,
   FiMinimize,
   FiPlay,
   FiSettings,
-  FiMessageSquare,
 } from "react-icons/fi";
-import { PanelBottomIcon as LuPanelBottom } from "lucide-react";
 import { RxCross2 } from "react-icons/rx";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import OutputConsole from "../../components/editor/OutputConsole";
 
 const EditorPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const [searchParams] = useSearchParams();
+  const showToast = useToast();
   const {
     isAuthenticated,
     isLoading: authLoading,
@@ -75,7 +81,13 @@ const EditorPage = () => {
     isLoading: projectLoading,
     error: projectError,
   } = useSelector((state: RootState) => state.project);
-
+  const [isSnippetModalOpen, setIsSnippetModalOpen] = useState(false);
+  const [snippetForm, setSnippetForm] = useState({
+    title: "",
+    description: "",
+    tags: "",
+    language: "",
+  });
   const [isRunning, setIsRunning] = useState(false);
   const [activeTab, setActiveTab] = useState("editor");
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -207,7 +219,7 @@ const EditorPage = () => {
             })
           );
         }
-      }, 1000);
+      }, 3000);
 
       return () => {
         clearTimeout(handler);
@@ -288,6 +300,18 @@ const EditorPage = () => {
 
   const handleRunComplete = () => {
     setIsRunning(false);
+  };
+
+  const handleCreateSnippet = () => {
+    if (!activeFile) {
+      showToast("No active file selected", "error");
+    }
+
+    if (!snippetForm.title.trim()) {
+      showToast("Please enter a title for the snippet", "error");
+      return;
+    }
+    setIsSnippetModalOpen(true);
   };
 
   const toggleConsole = () => setIsConsoleVisible(!isConsoleVisible);
@@ -394,6 +418,27 @@ const EditorPage = () => {
           <Button variant="outline" size="sm" onClick={handleSaveFile}>
             Save Code
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (!activeFile) {
+                showToast("No active file selected", "error");
+                return;
+              }
+              setSnippetForm({
+                ...snippetForm,
+                title: activeFile.name.replace(/\.[^/.]+$/, ""),
+                language: getFileLanguage(activeFile.name),
+              });
+
+              setIsSnippetModalOpen(true);
+            }}
+            disabled={!activeFile}
+          >
+            Create Snippet
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -647,6 +692,82 @@ const EditorPage = () => {
           )}
         </ResizablePanelGroup>
       </div>
+
+      <Dialog open={isSnippetModalOpen} onOpenChange={setIsSnippetModalOpen}>
+        <form>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Create Code Snippet</DialogTitle>
+              <DialogDescription>
+                Create a reusable code snippet from your current file
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="snippet-title" className="text-right">
+                  Title
+                </Label>
+                <Input
+                  id="snippet-title"
+                  value={snippetForm.title}
+                  onChange={(e) =>
+                    setSnippetForm({ ...snippetForm, title: e.target.value })
+                  }
+                  placeholder="Enter snippet title"
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="snippet-description" className="text-right">
+                  Description
+                </Label>
+                <Textarea
+                  id="snippet-description"
+                  value={snippetForm.description}
+                  onChange={(e) => {
+                    setSnippetForm({
+                      ...snippetForm,
+                      description: e.target.value,
+                    });
+                  }}
+                  placeholder="Enter snippet description"
+                  className="col-span-3"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="snippet-tags" className="text-right">
+                  Tags
+                </Label>
+                <Input
+                  id="snippet-tags"
+                  value={snippetForm.tags}
+                  onChange={(e) => {
+                    setSnippetForm({ ...snippetForm, tags: e.target.value });
+                  }}
+                  placeholder="Enter tags separated by commas"
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsSnippetModalOpen(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button variant="outline" onClick={handleCreateSnippet}>
+                Create Snippet
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </form>
+      </Dialog>
     </div>
   );
 };
