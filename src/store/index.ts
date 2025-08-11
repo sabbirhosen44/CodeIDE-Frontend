@@ -4,6 +4,7 @@ import authReducer from "./slices/authSlice";
 import templateReducer from "./slices/templateSlice";
 import adminReducer from "./slices/adminSlice";
 import projectReducer from "./slices/projectSlice";
+import snippetReducer from "./slices/snippetSlice";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     template: templateReducer,
     admin: adminReducer,
     project: projectReducer,
+    snippet: snippetReducer,
   },
 });
 

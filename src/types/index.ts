@@ -134,3 +134,40 @@ export interface ProjectState {
   currentPage: number;
   totalCount: number;
 }
+
+export interface Snippet {
+  _id?: string;
+  title: string;
+  description?: string;
+  code: string;
+  language:
+    | "JavaScript"
+    | "TypeScript"
+    | "Python"
+    | "Java"
+    | "C"
+    | "C++"
+    | "C#"
+    | "PHP"
+    | "Ruby"
+    | "Go"
+    | "Rust"
+    | "Swift"
+    | "Kotlin";
+  tags?: string[];
+  owner: string | Record<string, any>;
+  viewCount: number;
+  likeCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SnippetState {
+  snippets: Snippet[];
+  currentSnippet: Snippet | null;
+  isLoading: boolean;
+  error: string | null;
+  totalPages: number;
+  currentPage: number;
+  totalCount: number;
+}
