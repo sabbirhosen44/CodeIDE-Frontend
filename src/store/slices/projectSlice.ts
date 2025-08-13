@@ -124,7 +124,6 @@ export const updateProject = createAsyncThunk(
     const token = localStorage.getItem("token");
     if (!token) return rejectWithValue("No authentication token");
 
-    console.log(projectData);
     try {
       const response = await axios.put(
         `${API}/projects/${projectId}`,

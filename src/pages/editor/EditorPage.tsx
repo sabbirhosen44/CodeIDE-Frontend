@@ -65,6 +65,7 @@ import { RxCross2 } from "react-icons/rx";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import OutputConsole from "../../components/editor/OutputConsole";
+import { createSnippet } from "@/store/slices/snippetSlice";
 
 const EditorPage = () => {
   const navigate = useNavigate();
@@ -302,7 +303,7 @@ const EditorPage = () => {
     setIsRunning(false);
   };
 
-  const handleCreateSnippet = () => {
+  const handleCreateSnippet = async () => {
     if (!activeFile) {
       showToast("No active file selected", "error");
     }
@@ -311,7 +312,43 @@ const EditorPage = () => {
       showToast("Please enter a title for the snippet", "error");
       return;
     }
-    setIsSnippetModalOpen(true);
+
+    try {
+      const tagsArray = snippetForm.tags
+        .split(",")
+        .map((tag) => tag.trim().toLowerCase());
+      const language =
+        snippetForm.language || getFileLanguage(activeFile?.name ?? "");
+
+      const result = await dispatch(
+        createSnippet({
+          title: snippetForm.title,
+          description: snippetForm.description,
+          code: activeFile?.content || "",
+          tags: tagsArray,
+          language,
+          author: {
+            _id: user?._id || "",
+            name: user?.name || "",
+            email: user?.email || "",
+          },
+        })
+      );
+
+      if (createSnippet.fulfilled.match(result)) {
+        setSnippetForm({
+          title: "",
+          description: "",
+          tags: "",
+          language: "",
+        });
+        setIsSnippetModalOpen(false);
+      } else {
+        throw new Error(result.payload as string);
+      }
+    } catch (error: any) {
+      console.error("Failed to create snippet:", error.message || error);
+    }
   };
 
   const toggleConsole = () => setIsConsoleVisible(!isConsoleVisible);

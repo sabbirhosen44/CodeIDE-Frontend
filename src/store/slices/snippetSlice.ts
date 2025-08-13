@@ -17,7 +17,40 @@ const initialState: SnippetState = {
 // create snippet
 export const createSnippet = createAsyncThunk(
   "snippet/createSnippet",
-  async () => {}
+  async (
+    snippetData: {
+      title: string;
+      description: string;
+      tags: string[];
+      code: string;
+      language: string;
+      author: {
+        _id: string;
+        name: string;
+        email: string;
+      };
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return rejectWithValue("No authentication token");
+      }
+
+      const response = await axios.post(`${API}/snippets`, snippetData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to create snippet"
+      );
+    }
+  }
 );
 
 // get user snippets
@@ -28,8 +61,37 @@ export const getUserSnippets = createAsyncThunk(
 
 // get all snippets
 export const getSnippets = createAsyncThunk(
-  "snippet/getSnippets",
-  async () => {}
+  "snippet/getAlSnippets",
+  async (
+    params: {
+      language?: string;
+      tags?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    },
+    { rejectWithValue }
+  ) => {
+    const queryParams = new URLSearchParams();
+
+    if (params.language) queryParams.append("language", params.language);
+    if (params.search) queryParams.append("search", params.search);
+    if (params.tags) queryParams.append("tags", params.tags);
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+
+    try {
+      const response = await axios.get(
+        `${API}/snippets/?${queryParams.toString()}`
+      );
+
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to create snippet"
+      );
+    }
+  }
 );
 
 // get single snippet

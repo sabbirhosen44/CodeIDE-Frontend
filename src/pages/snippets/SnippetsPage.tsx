@@ -19,52 +19,71 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MOCK_SNIPPETS } from "@/mockdata";
-import { useState } from "react";
+import { AppDispatch, RootState } from "@/store";
+import { getSnippets } from "@/store/slices/snippetSlice";
+import { useEffect, useState } from "react";
 import { CiHeart, CiSearch } from "react-icons/ci";
 import { FaCode, FaFileCode } from "react-icons/fa";
 import { FiMessageSquare } from "react-icons/fi";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 const SnippetsPage = () => {
+  const { snippets, isLoading, error, totalPages, currentPage } = useSelector(
+    (state: RootState) => state.snippet
+  );
+  const dispatch = useDispatch<AppDispatch>();
   const [searchQuery, setSearchQuery] = useState("");
   const [languageFilter, setLanguageFilter] = useState("all");
   const [sortOption, setSortOption] = useState("recent");
   const [tagFilter, setTagFilter] = useState("all");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    dispatch(
+      getSnippets({
+        language: languageFilter !== "all" ? languageFilter : undefined,
+        tags: tagFilter !== "all" ? tagFilter : undefined,
+        search: searchQuery || undefined,
+        page: currentPage,
+        limit: 10,
+      })
+    );
+  }, [dispatch, languageFilter, tagFilter, searchQuery, currentPage]);
+
   const allTags = Array.from(
     new Set(MOCK_SNIPPETS.flatMap((snippet) => snippet.tags))
   );
 
-  let filteredSnippets = MOCK_SNIPPETS.filter((snippet) => {
-    const matchesSearch =
-      snippet.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      snippet.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      snippet.tags.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  // let filteredSnippet = MOCK_SNIPPETS.filter((snippet) => {
+  //   const matchesSearch =
+  //     snippet.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     snippet.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     snippet.tags.some((tag) =>
+  //       tag.toLowerCase().includes(searchQuery.toLowerCase())
+  //     );
 
-    const matchesLanguage =
-      languageFilter === "all" ||
-      snippet.language.toLowerCase() === languageFilter.toLowerCase();
+  //   const matchesLanguage =
+  //     languageFilter === "all" ||
+  //     snippet.language.toLowerCase() === languageFilter.toLowerCase();
 
-    const matchesTag = tagFilter === "all" || snippet.tags.includes(tagFilter);
+  //   const matchesTag = tagFilter === "all" || snippet.tags.includes(tagFilter);
 
-    return matchesSearch && matchesLanguage && matchesTag;
-  });
+  //   return matchesSearch && matchesLanguage && matchesTag;
+  // });
 
-  if (sortOption === "likes") {
-    filteredSnippets = [...filteredSnippets].sort((a, b) => b.likes - a.likes);
-  } else if (sortOption === "comments") {
-    filteredSnippets = [...filteredSnippets].sort(
-      (a, b) => b.comments.length - a.comments.length
-    );
-  } else {
-    filteredSnippets = [...filteredSnippets].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }
+  // if (sortOption === "likes") {
+  //   filteredSnippets = [...filteredSnippets].sort((a, b) => b.likes - a.likes);
+  // } else if (sortOption === "comments") {
+  //   filteredSnippets = [...filteredSnippets].sort(
+  //     (a, b) => b.comments.length - a.comments.length
+  //   );
+  // } else {
+  //   filteredSnippets = [...filteredSnippets].sort(
+  //     (a, b) =>
+  //       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  //   );
+  // }
 
   const handleViewSnippet = (snippetId: number) => {
     navigate(`/snippets/${snippetId}`);
@@ -93,7 +112,7 @@ const SnippetsPage = () => {
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Select
-            defaultValue="all"
+            value={languageFilter || "all"}
             onValueChange={(value) => {
               setLanguageFilter(value);
             }}
@@ -117,7 +136,7 @@ const SnippetsPage = () => {
           </Select>
 
           <Select
-            defaultValue="all"
+            value={tagFilter || "all"}
             onValueChange={(value) => setTagFilter(value)}
           >
             <SelectTrigger className="w-full sm:w-[150px]">
@@ -149,17 +168,17 @@ const SnippetsPage = () => {
         </div>
       </div>
 
-      {filteredSnippets.length > 0 ? (
+      {snippets.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 ">
-          {filteredSnippets.map((snippet) => (
-            <Card key={snippet.id} className="overflow-hidden">
+          {snippets.map((snippet) => (
+            <Card key={snippet._id} className="overflow-hidden">
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle
                       className="text-xl hover:text-primary cursor-pointer"
                       onClick={() => {
-                        handleViewSnippet(snippet.id);
+                        handleViewSnippet(snippet._id);
                       }}
                     >
                       {snippet.title}
