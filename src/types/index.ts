@@ -135,6 +135,13 @@ export interface ProjectState {
   totalCount: number;
 }
 
+export interface SnippetOwner {
+  _id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
+}
+
 export interface Snippet {
   _id?: string;
   title: string;
@@ -155,9 +162,11 @@ export interface Snippet {
     | "Swift"
     | "Kotlin";
   tags?: string[];
-  owner: string | Record<string, any>;
+  owner: SnippetOwner;
   viewCount: number;
   likeCount: number;
+  comments: any[];
+  commentcount: number;
   createdAt: string;
   updatedAt: string;
 }

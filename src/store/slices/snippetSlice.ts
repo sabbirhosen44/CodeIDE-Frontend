@@ -1,5 +1,5 @@
 import type { SnippetState } from "@/types";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
@@ -141,7 +141,34 @@ const snippetSlice = createSlice({
       state.currentSnippet = null;
     },
   },
-  extraReducers: (builder) => {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(createSnippet.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(createSnippet.fulfilled, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+        state.snippets.push(action.payload);
+      })
+      .addCase(createSnippet.rejected, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // Get All Snippets
+      .addCase(getSnippets.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getSnippets.fulfilled, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+        state.snippets = action.payload.data;
+      })
+      .addCase(getSnippets.rejected, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
+  },
 });
 
 export const { clearError, clearCurrentSnippet } = snippetSlice.actions;

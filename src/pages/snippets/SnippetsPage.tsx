@@ -39,6 +39,8 @@ const SnippetsPage = () => {
   const [tagFilter, setTagFilter] = useState("all");
   const navigate = useNavigate();
 
+  console.log(snippets);
+
   useEffect(() => {
     dispatch(
       getSnippets({
@@ -54,36 +56,6 @@ const SnippetsPage = () => {
   const allTags = Array.from(
     new Set(MOCK_SNIPPETS.flatMap((snippet) => snippet.tags))
   );
-
-  // let filteredSnippet = MOCK_SNIPPETS.filter((snippet) => {
-  //   const matchesSearch =
-  //     snippet.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     snippet.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     snippet.tags.some((tag) =>
-  //       tag.toLowerCase().includes(searchQuery.toLowerCase())
-  //     );
-
-  //   const matchesLanguage =
-  //     languageFilter === "all" ||
-  //     snippet.language.toLowerCase() === languageFilter.toLowerCase();
-
-  //   const matchesTag = tagFilter === "all" || snippet.tags.includes(tagFilter);
-
-  //   return matchesSearch && matchesLanguage && matchesTag;
-  // });
-
-  // if (sortOption === "likes") {
-  //   filteredSnippets = [...filteredSnippets].sort((a, b) => b.likes - a.likes);
-  // } else if (sortOption === "comments") {
-  //   filteredSnippets = [...filteredSnippets].sort(
-  //     (a, b) => b.comments.length - a.comments.length
-  //   );
-  // } else {
-  //   filteredSnippets = [...filteredSnippets].sort(
-  //     (a, b) =>
-  //       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  //   );
-  // }
 
   const handleViewSnippet = (snippetId: number) => {
     navigate(`/snippets/${snippetId}`);
@@ -178,7 +150,7 @@ const SnippetsPage = () => {
                     <CardTitle
                       className="text-xl hover:text-primary cursor-pointer"
                       onClick={() => {
-                        handleViewSnippet(snippet._id);
+                        handleViewSnippet(Number(snippet._id));
                       }}
                     >
                       {snippet.title}
@@ -190,11 +162,11 @@ const SnippetsPage = () => {
                   <div className="flex items-center">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={snippet.author.avatar}
-                        alt={snippet.author.name}
+                        src={snippet.owner?.avatarUrl || ""}
+                        alt={snippet.owner?.name || ""}
                       />
                       <AvatarFallback>
-                        {snippet.author.name.charAt(0)}
+                        {snippet.owner.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                   </div>
@@ -203,20 +175,21 @@ const SnippetsPage = () => {
               <CardContent>
                 <div className="flex flex-wrap gap-2 mb-3">
                   <Badge variant="outline">{snippet.language}</Badge>
-                  {snippet.tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="bg-primary/10 text-primary hover:bg-primary/20"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+                  {snippet.tags &&
+                    snippet.tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="bg-primary/10 text-primary hover:bg-primary/20"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
                 </div>
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto max-h-40">
                   <code>
-                    {snippet.content.split("\n").slice(0, 5).join("\n")}
-                    {snippet.content.split("\n").length > 5 ? "..." : ""}
+                    {snippet.code.split("\n").slice(0, 5).join("\n")}
+                    {snippet.code.split("\n").length > 5 ? "..." : ""}
                   </code>
                 </pre>
               </CardContent>
@@ -224,7 +197,7 @@ const SnippetsPage = () => {
                 <div className="flex items-center space-x-4 text-muted-foreground">
                   <div className="flex items-center">
                     <CiHeart className="size-4 mr-1 " />
-                    <span>{snippet.likes}</span>
+                    <span>{snippet.likeCount}</span>
                   </div>
                   <div className="flex items-center">
                     <FiMessageSquare className="size-4 mr-1" />
@@ -239,7 +212,7 @@ const SnippetsPage = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    handleViewSnippet(snippet.id);
+                    handleViewSnippet(Number(snippet._id));
                   }}
                 >
                   View Details
