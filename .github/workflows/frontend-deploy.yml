@@ -27,7 +27,10 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t frontend .
+          docker build \
+            --build-arg VITE_API_URL=${{ secrets.FRONTEND_API_URL }} \
+            --build-arg VITE_GROQ_API_KEY=${{ secrets.FRONTEND_GROQ_API_KEY }} \
+            -t frontend .
           docker tag frontend ${{ secrets.REGISTRY_LOGIN_SERVER }}/codeide-frontend:latest
 
       - name: Push Docker image
