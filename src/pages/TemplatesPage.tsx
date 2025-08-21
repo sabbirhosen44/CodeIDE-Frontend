@@ -1,4 +1,4 @@
-import { AlertDialogHeader } from "@/components/ui/alert-dialog";
+import LoadingSnipper from "@/components/LoadingSnipper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -197,9 +197,7 @@ const TemplatesPage = () => {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Loading templates...</p>
-        </div>
+        <LoadingSnipper>{"Loading Templates..."}</LoadingSnipper>
       ) : templates.length > 0 ? (
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

@@ -1,3 +1,4 @@
+import LoadingSnipper from "@/components/LoadingSnipper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import { FaCode, FaFileCode } from "react-icons/fa";
 import { FiMessageSquare } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { supportedLanguages } from "@/constants";
 
 const SnippetsPage = () => {
   const { snippets, isLoading, error, totalPages, currentPage } = useSelector(
@@ -82,6 +84,7 @@ const SnippetsPage = () => {
             placeholder="Search Templates..."
           />
         </div>
+
         <div className="flex flex-col sm:flex-row gap-2">
           <Select
             value={languageFilter || "all"}
@@ -94,15 +97,12 @@ const SnippetsPage = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="all">All Language</SelectItem>
-                <SelectItem value="Javascript">Javascript</SelectItem>
-                <SelectItem value="Python">Python</SelectItem>
-                <SelectItem value="C++">C++</SelectItem>
-                <SelectItem value="Typescript">Typescript</SelectItem>
-                <SelectItem value="Java">Java</SelectItem>
-                <SelectItem value="SQL">SQL</SelectItem>
-                <SelectItem value="PHP">PHP</SelectItem>
-                <SelectItem value="CSS">CSS</SelectItem>
+                <SelectItem value="all">All Languages</SelectItem>
+                {supportedLanguages.map((language) => (
+                  <SelectItem key={language} value={language}>
+                    {language}
+                  </SelectItem>
+                ))}
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -140,7 +140,9 @@ const SnippetsPage = () => {
         </div>
       </div>
 
-      {snippets.length > 0 ? (
+      {isLoading ? (
+        <LoadingSnipper>{"Loading Snippet..."}</LoadingSnipper>
+      ) : snippets.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 ">
           {snippets.map((snippet) => (
             <Card key={snippet._id} className="overflow-hidden">

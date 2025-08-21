@@ -66,6 +66,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import OutputConsole from "../../components/editor/OutputConsole";
 import { createSnippet } from "@/store/slices/snippetSlice";
+import LoadingSnipper from "@/components/LoadingSnipper";
 
 const EditorPage = () => {
   const navigate = useNavigate();
@@ -367,15 +368,12 @@ const EditorPage = () => {
     }
   };
 
-  if (authLoading || (projectLoading && !currentProject)) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <FiLoader className="size-8 animate-spin mx-auto mb-4" />
-          <p className="text-lg">Loading project...</p>
-        </div>
-      </div>
-    );
+  if (authLoading) {
+    return <LoadingSnipper>{"Loading Project..."}</LoadingSnipper>;
+  }
+
+  if (projectLoading && !currentProject) {
+    return <LoadingSnipper>{"Loading Project..."}</LoadingSnipper>;
   }
 
   if (projectError) {
