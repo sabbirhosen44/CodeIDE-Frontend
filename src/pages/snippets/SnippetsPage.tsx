@@ -41,8 +41,6 @@ const SnippetsPage = () => {
   const [tagFilter, setTagFilter] = useState("all");
   const navigate = useNavigate();
 
-  console.log(snippets);
-
   useEffect(() => {
     dispatch(
       getSnippets({

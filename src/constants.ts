@@ -234,22 +234,22 @@ export const EDITOR_THEMES = [
   { value: "hc-light", label: "High Contrast Light" },
 ];
 
-export const LANGUAGE_MAP: { [key: string]: string } = {
-  js: "javascript",
-  jsx: "javascript",
-  ts: "typescript",
-  tsx: "typescript",
-  py: "python",
-  java: "java",
-  c: "c",
-  cpp: "cpp",
-  cs: "csharp",
-  php: "php",
-  rb: "ruby",
-  go: "go",
-  rs: "rust",
-  swift: "swift",
-  kt: "kotlin",
+export const LANGUAGE_MAP: Record<string, string> = {
+  js: "JavaScript",
+  jsx: "JavaScript",
+  ts: "TypeScript",
+  tsx: "TypeScript",
+  py: "Python",
+  java: "Java",
+  c: "C",
+  cpp: "C++",
+  cs: "C#",
+  php: "PHP",
+  rb: "Ruby",
+  go: "Go",
+  rs: "Rust",
+  swift: "Swift",
+  kt: "Kotlin",
 };
 
 export const EDITOR_FONT_SIZES = [

@@ -38,6 +38,8 @@ export const createSnippet = createAsyncThunk(
         return rejectWithValue("No authentication token");
       }
 
+      console.log(snippetData);
+
       const response = await axios.post(`${API}/snippets`, snippetData, {
         headers: {
           Authorization: `Bearer ${token}`,
