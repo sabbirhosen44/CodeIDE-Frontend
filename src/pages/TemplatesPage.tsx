@@ -1,4 +1,5 @@
 import LoadingSnipper from "@/components/LoadingSnipper";
+import Pagination from "@/components/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -249,25 +250,12 @@ const TemplatesPage = () => {
               </Card>
             ))}
           </div>
-          <div className="flex justify-between items-center mt-6">
-            <Button
-              onClick={handlePreviousPage}
-              disabled={currentPage === 1}
-              variant="outline"
-            >
-              Previous
-            </Button>
-            <span>
-              page {currentPage} of {totalPages}
-            </span>
-            <Button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              variant="outline"
-            >
-              Next
-            </Button>
-          </div>
+          <Pagination
+            onHandlePreviousPage={handlePreviousPage}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onHandleNextPage={handleNextPage}
+          />
         </>
       ) : (
         <div className="text-center py-12">

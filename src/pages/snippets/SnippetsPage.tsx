@@ -29,6 +29,8 @@ import { FiMessageSquare } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { supportedLanguages } from "@/constants";
+import Pagination from "@/components/Pagination";
+import { setCurrentPage } from "@/store/slices/templateSlice";
 
 const SnippetsPage = () => {
   const { snippets, isLoading, error, totalPages, currentPage } = useSelector(
@@ -38,27 +40,34 @@ const SnippetsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [languageFilter, setLanguageFilter] = useState("all");
   const [sortOption, setSortOption] = useState("recent");
-  const [tagFilter, setTagFilter] = useState("all");
   const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(
       getSnippets({
         language: languageFilter !== "all" ? languageFilter : undefined,
-        tags: tagFilter !== "all" ? tagFilter : undefined,
         search: searchQuery || undefined,
+        sortBy: sortOption,
         page: currentPage,
         limit: 10,
       })
     );
-  }, [dispatch, languageFilter, tagFilter, searchQuery, currentPage]);
-
-  const allTags = Array.from(
-    new Set(MOCK_SNIPPETS.flatMap((snippet) => snippet.tags))
-  );
+  }, [dispatch, languageFilter, searchQuery, currentPage]);
 
   const handleViewSnippet = (snippetId: number) => {
     navigate(`/snippets/${snippetId}`);
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      dispatch(setCurrentPage(currentPage - 1));
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      dispatch(setCurrentPage(currentPage + 1));
+    }
   };
 
   return (
@@ -106,23 +115,6 @@ const SnippetsPage = () => {
           </Select>
 
           <Select
-            value={tagFilter || "all"}
-            onValueChange={(value) => setTagFilter(value)}
-          >
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder="Filter by tag" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Tags</SelectItem>
-              {allTags.map((tag) => (
-                <SelectItem key={tag} value={tag}>
-                  {tag}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
             defaultValue="recent"
             onValueChange={(value) => setSortOption(value)}
           >
@@ -141,86 +133,94 @@ const SnippetsPage = () => {
       {isLoading ? (
         <LoadingSnipper>{"Loading Snippet..."}</LoadingSnipper>
       ) : snippets.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 ">
-          {snippets.map((snippet) => (
-            <Card key={snippet._id} className="overflow-hidden">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle
-                      className="text-xl hover:text-primary cursor-pointer"
-                      onClick={() => {
-                        handleViewSnippet(Number(snippet._id));
-                      }}
-                    >
-                      {snippet.title}
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      {snippet.description}
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={snippet.owner?.avatarUrl || ""}
-                        alt={snippet.owner?.name || ""}
-                      />
-                      <AvatarFallback>
-                        {snippet.owner.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <Badge variant="outline">{snippet.language}</Badge>
-                  {snippet.tags &&
-                    snippet.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="secondary"
-                        className="bg-primary/10 text-primary hover:bg-primary/20"
+        <>
+          <div className="grid gap-6 md:grid-cols-2 ">
+            {snippets.map((snippet) => (
+              <Card key={snippet._id} className="overflow-hidden">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle
+                        className="text-xl hover:text-primary cursor-pointer"
+                        onClick={() => {
+                          handleViewSnippet(Number(snippet._id));
+                        }}
                       >
-                        {tag}
-                      </Badge>
-                    ))}
-                </div>
-                <pre className="bg-muted p-4 rounded-md overflow-x-auto max-h-40">
-                  <code>
-                    {snippet.code.split("\n").slice(0, 5).join("\n")}
-                    {snippet.code.split("\n").length > 5 ? "..." : ""}
-                  </code>
-                </pre>
-              </CardContent>
-              <CardFooter className="border-t flex justify-between">
-                <div className="flex items-center space-x-4 text-muted-foreground">
-                  <div className="flex items-center">
-                    <CiHeart className="size-4 mr-1 " />
-                    <span>{snippet.likeCount}</span>
+                        {snippet.title}
+                      </CardTitle>
+                      <CardDescription className="mt-1">
+                        {snippet.description}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={snippet.owner?.avatarUrl || ""}
+                          alt={snippet.owner?.name || ""}
+                        />
+                        <AvatarFallback>
+                          {snippet.owner.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <FiMessageSquare className="size-4 mr-1" />
-                    <span>{snippet.comments.length}</span>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <Badge variant="outline">{snippet.language}</Badge>
+                    {snippet.tags &&
+                      snippet.tags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="bg-primary/10 text-primary hover:bg-primary/20"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
                   </div>
-                  <div className="flex items-center">
-                    <FaCode className="size-4 mr-1" />
-                    <span>{snippet.language}</span>
+                  <pre className="bg-muted p-4 rounded-md overflow-x-auto max-h-40">
+                    <code>
+                      {snippet.code.split("\n").slice(0, 5).join("\n")}
+                      {snippet.code.split("\n").length > 5 ? "..." : ""}
+                    </code>
+                  </pre>
+                </CardContent>
+                <CardFooter className="border-t flex justify-between pt-4">
+                  <div className="flex items-center space-x-4 text-muted-foreground">
+                    <div className="flex items-center">
+                      <CiHeart className="size-4 mr-1 " />
+                      <span>{snippet.likeCount}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <FiMessageSquare className="size-4 mr-1" />
+                      <span>{snippet.comments.length}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <FaCode className="size-4 mr-1" />
+                      <span>{snippet.language}</span>
+                    </div>
                   </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    handleViewSnippet(Number(snippet._id));
-                  }}
-                >
-                  View Details
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      handleViewSnippet(Number(snippet._id));
+                    }}
+                  >
+                    View Details
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+          <Pagination
+            onHandlePreviousPage={handlePreviousPage}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onHandleNextPage={handleNextPage}
+          />
+        </>
       ) : (
         <div className="text-center py-12">
           <FaFileCode className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

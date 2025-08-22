@@ -69,6 +69,7 @@ export const getSnippets = createAsyncThunk(
       language?: string;
       tags?: string;
       search?: string;
+      sortBy?: string;
       page?: number;
       limit?: number;
     },
@@ -78,7 +79,7 @@ export const getSnippets = createAsyncThunk(
 
     if (params.language) queryParams.append("language", params.language);
     if (params.search) queryParams.append("search", params.search);
-    if (params.tags) queryParams.append("tags", params.tags);
+    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
 
