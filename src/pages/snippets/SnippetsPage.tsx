@@ -1,4 +1,5 @@
 import LoadingSnipper from "@/components/LoadingSnipper";
+import Pagination from "@/components/Pagination";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,21 +20,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MOCK_SNIPPETS } from "@/mockdata";
+import { supportedLanguages } from "@/constants";
 import { AppDispatch, RootState } from "@/store";
 import { getSnippets } from "@/store/slices/snippetSlice";
+import { setCurrentPage } from "@/store/slices/templateSlice";
 import { useEffect, useState } from "react";
 import { CiHeart, CiSearch } from "react-icons/ci";
 import { FaCode, FaFileCode } from "react-icons/fa";
 import { FiMessageSquare } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { supportedLanguages } from "@/constants";
-import Pagination from "@/components/Pagination";
-import { setCurrentPage } from "@/store/slices/templateSlice";
 
 const SnippetsPage = () => {
-  const { snippets, isLoading, error, totalPages, currentPage } = useSelector(
+  const { snippets, isLoading, totalPages, currentPage } = useSelector(
     (state: RootState) => state.snippet
   );
   const dispatch = useDispatch<AppDispatch>();
@@ -54,7 +53,7 @@ const SnippetsPage = () => {
     );
   }, [dispatch, languageFilter, searchQuery, currentPage]);
 
-  const handleViewSnippet = (snippetId: number) => {
+  const handleViewSnippet = (snippetId: string) => {
     navigate(`/snippets/${snippetId}`);
   };
 
@@ -143,7 +142,7 @@ const SnippetsPage = () => {
                       <CardTitle
                         className="text-xl hover:text-primary cursor-pointer"
                         onClick={() => {
-                          handleViewSnippet(Number(snippet._id));
+                          handleViewSnippet(snippet?._id as string);
                         }}
                       >
                         {snippet.title}
@@ -205,7 +204,7 @@ const SnippetsPage = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      handleViewSnippet(Number(snippet._id));
+                      handleViewSnippet(snippet._id as string);
                     }}
                   >
                     View Details

@@ -12,7 +12,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { MOCK_SNIPPETS } from "@/mockdata";
+import { AppDispatch } from "@/store";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import {
@@ -26,9 +26,15 @@ import {
 import { FiArrowLeft, FiShare2 } from "react-icons/fi";
 import { MdContentCopy } from "react-icons/md";
 import { SlCalender } from "react-icons/sl";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
+import { toggleLikeSnippet } from "@/store/slices/snippetSlice";
 
 const SnippetDetailPage = () => {
+  const { snippets, currentSnippet } = useSelector(
+    (state: any) => state.snippet
+  );
+  const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState("code");
   const [snippet, setSnippet] = useState<any>({});
   const [isLiked, setIsLiked] = useState<Boolean>(false);
@@ -39,8 +45,8 @@ const SnippetDetailPage = () => {
   const showToast = useToast();
 
   useEffect(() => {
-    const foundSnippet = MOCK_SNIPPETS.find(
-      (snippet) => snippet.id === snippetID
+    const foundSnippet = snippets.find(
+      (snippet: any) => snippet?._id === snippetID
     );
 
     if (foundSnippet) {
@@ -54,6 +60,8 @@ const SnippetDetailPage = () => {
   const handleLike = () => {
     const updatedIsLiked = !isLiked;
     setIsLiked(updatedIsLiked);
+
+    dispatch(toggleLikeSnippet(snippet?._id));
 
     showToast(
       updatedIsLiked
@@ -178,18 +186,18 @@ const SnippetDetailPage = () => {
                     </Button>
                   </div>
                   <pre className="bg-muted p-4 rounded-md overflow-x-auto ">
-                    <code>{snippet?.content}</code>
+                    <code>{snippet?.code}</code>
                   </pre>
                 </TabsContent>
 
                 <TabsContent value="comments" className="pt-4">
                   <div className="space-y-4 last:mb-4">
-                    {comments.length === 0 ? (
+                    {snippet?.comments?.length === 0 ? (
                       <p className="text-center text-muted-foreground py-6">
                         No comments yet. Be the first to comment!
                       </p>
                     ) : (
-                      comments.map((comment) => (
+                      snippet?.comments?.map((comment: any) => (
                         <div key={comment.id} className="border rounded-md p-4">
                           <div className="flex items-start gap-3">
                             <Avatar className="size-8">
@@ -223,7 +231,7 @@ const SnippetDetailPage = () => {
                 <div className="flex items-center space-x-4 text-muted-foreground">
                   <div className="flex items-center">
                     <FaRegHeart className="size-4 mr-1" />
-                    <span>{isLiked ? snippet.likes + 1 : snippet.likes}</span>
+                    <span>{snippet?.likeCount}</span>
                   </div>
                   <div className="flex items-center">
                     <FaRegCommentAlt className="size-4 mr-1" />
@@ -246,11 +254,11 @@ const SnippetDetailPage = () => {
                       alt={snippet?.author?.name}
                     />
                     <AvatarFallback>
-                      {snippet?.author?.name.charAt(0)}
+                      {snippet?.owner?.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{snippet?.author?.name}</p>
+                    <p className="font-medium">{snippet?.owner?.name}</p>
                     <p className="text-sm text-muted-foreground">Author</p>
                   </div>
                 </div>

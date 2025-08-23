@@ -143,7 +143,7 @@ export interface SnippetOwner {
 }
 
 export interface Snippet {
-  _id?: string;
+  _id: string;
   title: string;
   description?: string;
   code: string;
@@ -165,6 +165,7 @@ export interface Snippet {
   owner: SnippetOwner;
   viewCount: number;
   likeCount: number;
+  isLiked: Boolean;
   comments: any[];
   commentcount: number;
   createdAt: string;

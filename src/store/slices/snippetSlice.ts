@@ -1,5 +1,10 @@
 import type { SnippetState } from "@/types";
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSlice,
+  isRejectedWithValue,
+  PayloadAction,
+} from "@reduxjs/toolkit";
 import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
@@ -106,7 +111,32 @@ export const getSnippet = createAsyncThunk(
 // Toggle like snippet
 export const toggleLikeSnippet = createAsyncThunk(
   "snippet/toggleLikeSnippet",
-  async () => {}
+  async (snippetId: string, { rejectWithValue }) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return rejectWithValue("No authentication token");
+    }
+
+    try {
+      const response = await axios.post(
+        `${API}/snippets/${snippetId}/like`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to like snippet"
+      );
+    }
+  }
 );
 
 // Update snippet
@@ -170,7 +200,31 @@ const snippetSlice = createSlice({
       .addCase(getSnippets.rejected, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
         state.error = action.payload;
-      });
+      })
+      // toggle like snippet
+      .addCase(toggleLikeSnippet.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        toggleLikeSnippet.fulfilled,
+        (state, action: PayloadAction<any>) => {
+          state.isLoading = false;
+          const { snippetId, isLiked, likeCount } = action.payload;
+
+          if (state.currentSnippet && state.currentSnippet?._id === snippetId) {
+            state.currentSnippet.likeCount = likeCount;
+            state.currentSnippet.isLiked = isLiked;
+          }
+        }
+      )
+      .addCase(
+        toggleLikeSnippet.rejected,
+        (state, action: PayloadAction<any>) => {
+          state.isLoading = false;
+          state.error = action.payload;
+        }
+      );
   },
 });
 
