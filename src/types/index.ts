@@ -181,3 +181,10 @@ export interface SnippetState {
   currentPage: number;
   totalCount: number;
 }
+
+export interface SnippetFormState {
+  title: string;
+  description: string;
+  tags: string;
+  language: string;
+}

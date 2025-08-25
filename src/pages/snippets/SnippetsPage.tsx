@@ -178,7 +178,7 @@ const SnippetsPage = () => {
                         </Badge>
                       ))}
                   </div>
-                  <pre className="bg-muted p-4 rounded-md overflow-x-auto max-h-40">
+                  <pre className="bg-muted p-4 rounded-md overflow-x-auto min-h-[120px] max-h-40 ">
                     <code>
                       {snippet.code.split("\n").slice(0, 5).join("\n")}
                       {snippet.code.split("\n").length > 5 ? "..." : ""}

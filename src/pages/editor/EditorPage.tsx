@@ -48,7 +48,7 @@ import {
   fetchProjectById,
   updateProject,
 } from "@/store/slices/projectSlice";
-import type { EditorSettings, TemplateFile } from "@/types";
+import type { EditorSettings, SnippetFormState, TemplateFile } from "@/types";
 import Editor from "@monaco-editor/react";
 import { PanelBottomIcon as LuPanelBottom } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -67,6 +67,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import OutputConsole from "../../components/editor/OutputConsole";
 import { createSnippet } from "@/store/slices/snippetSlice";
 import LoadingSnipper from "@/components/LoadingSnipper";
+import { snippetFormSchema } from "@/schemas";
 
 const EditorPage = () => {
   const navigate = useNavigate();
@@ -84,7 +85,7 @@ const EditorPage = () => {
     error: projectError,
   } = useSelector((state: RootState) => state.project);
   const [isSnippetModalOpen, setIsSnippetModalOpen] = useState(false);
-  const [snippetForm, setSnippetForm] = useState({
+  const [snippetForm, setSnippetForm] = useState<SnippetFormState>({
     title: "",
     description: "",
     tags: "",
@@ -309,24 +310,18 @@ const EditorPage = () => {
       showToast("No active file selected", "error");
     }
 
-    if (!snippetForm.title.trim()) {
-      showToast("Please enter a title for the snippet", "error");
-      return;
-    }
-
     try {
-      const tagsArray = snippetForm.tags
-        .split(",")
-        .map((tag) => tag.trim().toLowerCase());
+      const parsedData = snippetFormSchema.parse(snippetForm);
+
       const language =
-        snippetForm.language || getFileLanguage(activeFile?.name ?? "");
+        parsedData.language || getFileLanguage(activeFile?.name ?? "");
 
       const result = await dispatch(
         createSnippet({
-          title: snippetForm.title,
-          description: snippetForm.description,
+          title: parsedData.title,
+          description: parsedData.description,
           code: activeFile?.content || "",
-          tags: tagsArray,
+          tags: parsedData.tags,
           language,
           author: {
             _id: user?._id || "",
@@ -344,11 +339,17 @@ const EditorPage = () => {
           language: "",
         });
         setIsSnippetModalOpen(false);
+        showToast("Snippet created successfully", "success");
       } else {
         throw new Error(result.payload as string);
       }
     } catch (error: any) {
-      console.error("Failed to create snippet:", error.message || error);
+      if (error.errors) {
+        showToast(error.errors[0].message, "error");
+      } else {
+        showToast(error.message || "Failed to create snippet", "error");
+      }
+      console.error("Failed to create snippet:", error);
     }
   };
 
