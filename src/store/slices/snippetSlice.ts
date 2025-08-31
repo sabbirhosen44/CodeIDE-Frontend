@@ -6,6 +6,7 @@ import {
   PayloadAction,
 } from "@reduxjs/toolkit";
 import axios from "axios";
+import { error } from "console";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -105,7 +106,22 @@ export const getSnippets = createAsyncThunk(
 // get single snippet
 export const getSnippet = createAsyncThunk(
   "snippet/getSnippet",
-  async () => {}
+  async (snippetId: string, { rejectWithValue }) => {
+    const token = localStorage.getItem("token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      const response = await axios.get(`${API}/snippets/${snippetId}`, {
+        headers,
+      });
+      console.log(response.data.data);
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch snippet data"
+      );
+    }
+  }
 );
 
 // Toggle like snippet
@@ -198,6 +214,19 @@ const snippetSlice = createSlice({
         state.snippets = action.payload.data;
       })
       .addCase(getSnippets.rejected, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      // get single snippet details
+      .addCase(getSnippet.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getSnippet.fulfilled, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+        state.currentSnippet = action.payload;
+      })
+      .addCase(getSnippet.rejected, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
         state.error = action.payload;
       })

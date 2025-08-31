@@ -28,12 +28,14 @@ import { MdContentCopy } from "react-icons/md";
 import { SlCalender } from "react-icons/sl";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { toggleLikeSnippet } from "@/store/slices/snippetSlice";
+import { getSnippet, toggleLikeSnippet } from "@/store/slices/snippetSlice";
+import LoadingSnipper from "@/components/LoadingSnipper";
 
 const SnippetDetailPage = () => {
-  const { snippets, currentSnippet } = useSelector(
+  const { currentSnippet, isLoading, error } = useSelector(
     (state: any) => state.snippet
   );
+  const { isAuthenticated } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState("code");
   const [snippet, setSnippet] = useState<any>({});
@@ -45,30 +47,30 @@ const SnippetDetailPage = () => {
   const showToast = useToast();
 
   useEffect(() => {
-    const foundSnippet = snippets.find(
-      (snippet: any) => snippet?._id === snippetID
-    );
-
-    if (foundSnippet) {
-      setSnippet(foundSnippet);
-      setComments(foundSnippet.comments);
-    } else {
-      navigate("/404");
+    if (snippetID) {
+      dispatch(getSnippet(snippetID));
     }
-  }, [snippetID, navigate]);
+  }, [dispatch, snippetID]);
 
-  const handleLike = () => {
-    const updatedIsLiked = !isLiked;
-    setIsLiked(updatedIsLiked);
+  console.log(currentSnippet);
 
-    dispatch(toggleLikeSnippet(snippet?._id));
+  const handleLike = async () => {
+    if (!isAuthenticated) {
+      return;
+    }
+    if (!currentSnippet) return;
 
-    showToast(
-      updatedIsLiked
-        ? "You've liked this snippet"
-        : "You've removed your like from this snippet",
-      "success"
-    );
+    try {
+      await dispatch(toggleLikeSnippet(currentSnippet._id));
+      showToast(
+        !currentSnippet.isLiked
+          ? "You've liked this snippet"
+          : "You've removed your like from this snippet",
+        "success"
+      );
+    } catch (error: any) {
+      console.error("Error toggling like:", error);
+    }
   };
 
   const handleSave = () => {
@@ -94,13 +96,26 @@ const SnippetDetailPage = () => {
   };
 
   const handleCopyCode = () => {
-    window.navigator.clipboard.writeText(snippet.content);
+    if (currentSnippet?.code) {
+      window.navigator.clipboard.writeText(currentSnippet.content);
 
-    showToast("The snippet code has been copied to your clipboard", "success");
+      showToast(
+        "The snippet code has been copied to your clipboard",
+        "success"
+      );
+    }
   };
 
-  if (!snippet) {
-    return <div className="container mx-auto py-8 px-4">Loading...</div>;
+  // if (isLoading) {
+  //   return <LoadingSnipper>Loading snippet details...</LoadingSnipper>;
+  // }
+
+  if (!currentSnippet) {
+    return (
+      <p className="text-center text-muted-foreground py-6">
+        Snippet not found
+      </p>
+    );
   }
 
   return (
@@ -121,14 +136,16 @@ const SnippetDetailPage = () => {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-2xl">{snippet.title}</CardTitle>
+                    <CardTitle className="text-2xl">
+                      {currentSnippet.title}
+                    </CardTitle>
                     <CardDescription className="mt-2">
-                      {snippet.description}
+                      {currentSnippet.description}
                     </CardDescription>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button variant="outline" onClick={handleLike}>
-                      {isLiked ? (
+                      {currentSnippet.isLiked ? (
                         <FaHeart className="size-4 text-red-500 " />
                       ) : (
                         <FaRegHeart className="size-4 " />
@@ -148,9 +165,9 @@ const SnippetDetailPage = () => {
                 </div>
                 <div className="flex gap-2 mt-4">
                   <Badge className="cursor-pointer" variant="outline">
-                    {snippet.language}
+                    {currentSnippet.language}
                   </Badge>
-                  {snippet.tags?.map((tag: string) => (
+                  {currentSnippet.tags?.map((tag: string) => (
                     <Badge
                       key={tag}
                       variant="secondary"
@@ -170,7 +187,7 @@ const SnippetDetailPage = () => {
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="code">Code</TabsTrigger>
                   <TabsTrigger value="comments">
-                    Comments ({snippet.comments?.length})
+                    Comments ({currentSnippet.comments?.length})
                   </TabsTrigger>
                 </TabsList>
 
@@ -178,7 +195,7 @@ const SnippetDetailPage = () => {
                   <div className="flex justify-between items-center mb-2">
                     <div className="flex items-center text-sm text-muted-foreground">
                       <FaCode className="size-4 mr-1" />
-                      <span>{snippet.language}</span>
+                      <span>{currentSnippet.language}</span>
                     </div>
                     <Button variant="ghost" size="sm" onClick={handleCopyCode}>
                       <MdContentCopy className="size-4 mr-2" />
@@ -186,18 +203,18 @@ const SnippetDetailPage = () => {
                     </Button>
                   </div>
                   <pre className="bg-muted p-4 rounded-md overflow-x-auto ">
-                    <code>{snippet?.code}</code>
+                    <code>{currentSnippet?.code}</code>
                   </pre>
                 </TabsContent>
 
                 <TabsContent value="comments" className="pt-4">
                   <div className="space-y-4 last:mb-4">
-                    {snippet?.comments?.length === 0 ? (
+                    {currentSnippet?.comments?.length === 0 ? (
                       <p className="text-center text-muted-foreground py-6">
                         No comments yet. Be the first to comment!
                       </p>
                     ) : (
-                      snippet?.comments?.map((comment: any) => (
+                      currentSnippet?.comments?.map((comment: any) => (
                         <div key={comment.id} className="border rounded-md p-4">
                           <div className="flex items-start gap-3">
                             <Avatar className="size-8">
@@ -231,7 +248,7 @@ const SnippetDetailPage = () => {
                 <div className="flex items-center space-x-4 text-muted-foreground">
                   <div className="flex items-center">
                     <FaRegHeart className="size-4 mr-1" />
-                    <span>{snippet?.likeCount}</span>
+                    <span>{currentSnippet?.likeCount}</span>
                   </div>
                   <div className="flex items-center">
                     <FaRegCommentAlt className="size-4 mr-1" />
@@ -250,15 +267,15 @@ const SnippetDetailPage = () => {
                 <div className="flex items-center gap-3">
                   <Avatar className="size-10">
                     <AvatarImage
-                      src={snippet?.author?.avatar}
-                      alt={snippet?.author?.name}
+                      src={currentSnippet?.author?.avatar}
+                      alt={currentSnippet?.author?.name}
                     />
                     <AvatarFallback>
-                      {snippet?.owner?.name.charAt(0)}
+                      {currentSnippet?.owner?.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{snippet?.owner?.name}</p>
+                    <p className="font-medium">{currentSnippet?.owner?.name}</p>
                     <p className="text-sm text-muted-foreground">Author</p>
                   </div>
                 </div>
@@ -293,9 +310,7 @@ const SnippetDetailPage = () => {
                     <span>Likes</span>
                   </div>
                   <div>
-                    <span className="text-sm">
-                      {isLiked ? snippet.likes + 1 : snippet.likes}
-                    </span>
+                    <span className="text-sm">{currentSnippet.likeCount}</span>
                   </div>
                 </div>
                 <Separator />
@@ -331,7 +346,7 @@ const SnippetDetailPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {snippet?.tags?.map((tag: string) => (
+                  {currentSnippet?.tags?.map((tag: string) => (
                     <Badge
                       key={tag}
                       variant="secondary"
