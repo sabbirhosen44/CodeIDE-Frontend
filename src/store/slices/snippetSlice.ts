@@ -114,7 +114,6 @@ export const getSnippet = createAsyncThunk(
       const response = await axios.get(`${API}/snippets/${snippetId}`, {
         headers,
       });
-      console.log(response.data.data);
       return response.data.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -170,7 +169,36 @@ export const deleteSnippet = createAsyncThunk(
 // Add comment to snippet
 export const addComment = createAsyncThunk(
   "snippet/addComment",
-  async () => {}
+  async (
+    { snippetID, content }: { snippetID: string; content: string },
+    { rejectWithValue }
+  ) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return rejectWithValue("No authentication token");
+    }
+
+    try {
+      const response = await axios.post(
+        `${API}/snippets/${snippetID}/comments`,
+        { content },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log(response.data.data);
+
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to add comment"
+      );
+    }
+  }
 );
 
 // Delete comment
@@ -253,7 +281,29 @@ const snippetSlice = createSlice({
           state.isLoading = false;
           state.error = action.payload;
         }
-      );
+      )
+      .addCase(addComment.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(addComment.fulfilled, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+
+        if (
+          state.currentSnippet &&
+          state.currentSnippet._id.toString() ===
+            action.payload.snippet.toString()
+        ) {
+          if (!state.currentSnippet.comments) {
+            state.currentSnippet.comments = [];
+          }
+          state.currentSnippet.comments.push(action.payload);
+        }
+      })
+      .addCase(addComment.rejected, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
   },
 });
 

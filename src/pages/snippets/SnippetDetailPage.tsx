@@ -23,25 +23,32 @@ import {
   FaRegCommentAlt,
   FaRegHeart,
 } from "react-icons/fa";
-import { FiArrowLeft, FiShare2 } from "react-icons/fi";
+import { FiArrowLeft, FiEye, FiShare2 } from "react-icons/fi";
 import { MdContentCopy } from "react-icons/md";
 import { SlCalender } from "react-icons/sl";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { getSnippet, toggleLikeSnippet } from "@/store/slices/snippetSlice";
+import {
+  addComment,
+  getSnippet,
+  toggleLikeSnippet,
+} from "@/store/slices/snippetSlice";
 import LoadingSnipper from "@/components/LoadingSnipper";
+import { Textarea } from "@/components/ui/textarea";
 
 const SnippetDetailPage = () => {
   const { currentSnippet, isLoading, error } = useSelector(
     (state: any) => state.snippet
   );
-  const { isAuthenticated } = useSelector((state: any) => state.auth);
+  const { isAuthenticated, user } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState("code");
   const [snippet, setSnippet] = useState<any>({});
   const [isLiked, setIsLiked] = useState<Boolean>(false);
+  const [newComment, setNewComment] = useState<string>("");
   const [isSaved, setIsSaved] = useState<Boolean>(false);
   const [comments, setComments] = useState<any[]>([]);
+  const [isAddingComment, setIsAddingComment] = useState(false);
   const { id: snippetID } = useParams();
   const navigate = useNavigate();
   const showToast = useToast();
@@ -51,8 +58,6 @@ const SnippetDetailPage = () => {
       dispatch(getSnippet(snippetID));
     }
   }, [dispatch, snippetID]);
-
-  console.log(currentSnippet);
 
   const handleLike = async () => {
     if (!isAuthenticated) {
@@ -105,6 +110,31 @@ const SnippetDetailPage = () => {
       );
     }
   };
+
+  const handleAddComment = async () => {
+    console.log("entered!");
+    if (!isAuthenticated) return;
+    if (!newComment.trim() || !snippetID) return;
+
+    setIsAddingComment(true);
+
+    try {
+      const result = await dispatch(
+        addComment({ snippetID, content: newComment.trim() })
+      );
+
+      if (addComment.fulfilled.match(result)) {
+        setNewComment("");
+        await dispatch(getSnippet(snippetID));
+      }
+    } catch (error: any) {
+      console.error("Error adding comment:", error);
+    } finally {
+      setIsAddingComment(false);
+    }
+  };
+
+  console.log(currentSnippet);
 
   // if (isLoading) {
   //   return <LoadingSnipper>Loading snippet details...</LoadingSnipper>;
@@ -209,32 +239,86 @@ const SnippetDetailPage = () => {
 
                 <TabsContent value="comments" className="pt-4">
                   <div className="space-y-4 last:mb-4">
+                    {isAuthenticated && user ? (
+                      <div className="border rounded-md p-4">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="size-8">
+                            <AvatarImage
+                              src={user.avatar || "/placeholder.svg"}
+                              alt={user.name}
+                            />
+                            <AvatarFallback>
+                              {user.name?.charAt(0) || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 space-y-2">
+                            <Textarea
+                              placeholder="Add a comment..."
+                              value={newComment}
+                              onChange={(e) => setNewComment(e.target.value)}
+                              rows={3}
+                            />
+                            <div className="flex justify-end">
+                              <Button
+                                onClick={handleAddComment}
+                                disabled={!newComment.trim() || isAddingComment}
+                                size="sm"
+                              >
+                                {isAddingComment ? "Adding..." : "Add Comment"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border rounded-md p-4 text-center">
+                        <p className="text-muted-foreground mb-2">
+                          Please log in to add comments
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate("/login")}
+                        >
+                          Log In
+                        </Button>
+                      </div>
+                    )}
                     {currentSnippet?.comments?.length === 0 ? (
                       <p className="text-center text-muted-foreground py-6">
                         No comments yet. Be the first to comment!
                       </p>
                     ) : (
-                      currentSnippet?.comments?.map((comment: any) => (
-                        <div key={comment.id} className="border rounded-md p-4">
+                      currentSnippet.comments.map((comment: any) => (
+                        <div
+                          key={comment._id}
+                          className="border rounded-md p-4"
+                        >
                           <div className="flex items-start gap-3">
                             <Avatar className="size-8">
                               <AvatarImage
-                                src={comment.author.avatar}
-                                alt={comment.author.name}
+                                src={comment.user?.avatar || "/placeholder.svg"}
+                                alt={comment.user?.name}
                               />
                               <AvatarFallback>
-                                {comment.author.name.charAt(0)}
+                                {comment.user?.name?.charAt(0) || "U"}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <div className="flex justify-between items-center">
+                              <div className="flex justify-between items-center mb-2">
                                 <p className="font-medium">
-                                  {comment.author.name}
+                                  {comment.user?.name || "Anonymous"}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatDistanceToNow(comment.createdAt)}
+                                  {formatDistanceToNow(
+                                    new Date(comment.createdAt),
+                                    { addSuffix: true }
+                                  )}
                                 </p>
                               </div>
+                              <p className="text-sm whitespace-pre-wrap">
+                                {comment.content}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -248,11 +332,15 @@ const SnippetDetailPage = () => {
                 <div className="flex items-center space-x-4 text-muted-foreground">
                   <div className="flex items-center">
                     <FaRegHeart className="size-4 mr-1" />
-                    <span>{currentSnippet?.likeCount}</span>
+                    <span>{currentSnippet?.likeCount || 0}</span>
                   </div>
                   <div className="flex items-center">
                     <FaRegCommentAlt className="size-4 mr-1" />
-                    <span>{comments.length}</span>
+                    <span>{currentSnippet.comments.length || 0}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <FiEye className="size-4 mr-1" />
+                    <span>{currentSnippet.viewCount || 0}</span>
                   </div>
                 </div>
               </CardFooter>
@@ -321,7 +409,9 @@ const SnippetDetailPage = () => {
                     <span>Comments</span>
                   </div>
                   <div>
-                    <span className="text-sm">{comments.length}</span>
+                    <span className="text-sm">
+                      {currentSnippet.comments.length}
+                    </span>
                   </div>
                 </div>
 
