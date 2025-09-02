@@ -11,8 +11,14 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { AppDispatch } from "@/store";
+import {
+  addComment,
+  getSnippet,
+  toggleLikeSnippet,
+} from "@/store/slices/snippetSlice";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import {
@@ -28,13 +34,6 @@ import { MdContentCopy } from "react-icons/md";
 import { SlCalender } from "react-icons/sl";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  addComment,
-  getSnippet,
-  toggleLikeSnippet,
-} from "@/store/slices/snippetSlice";
-import LoadingSnipper from "@/components/LoadingSnipper";
-import { Textarea } from "@/components/ui/textarea";
 
 const SnippetDetailPage = () => {
   const { currentSnippet, isLoading, error } = useSelector(
@@ -382,10 +381,13 @@ const SnippetDetailPage = () => {
                   </div>
                   <div>
                     <span className="text-sm">
-                      {snippet.createdAt &&
-                        formatDistanceToNow(new Date(snippet.createdAt), {
-                          addSuffix: true,
-                        })}
+                      {currentSnippet.createdAt &&
+                        formatDistanceToNow(
+                          new Date(currentSnippet.createdAt),
+                          {
+                            addSuffix: true,
+                          }
+                        )}
                     </span>
                   </div>
                 </div>
@@ -423,7 +425,7 @@ const SnippetDetailPage = () => {
                     <span>Language</span>
                   </div>
                   <div>
-                    <Badge variant="outline">{snippet.language}</Badge>
+                    <Badge variant="outline">{currentSnippet.language}</Badge>
                   </div>
                 </div>
                 <Separator />
