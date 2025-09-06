@@ -159,6 +159,21 @@ export const resetPassword = createAsyncThunk(
   }
 );
 
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async (_, { rejectWithValue }) => {}
+);
+
+export const changePassword = createAsyncThunk(
+  "auth/updatePassword",
+  async (_, { rejectWithValue }) => {}
+);
+
+export const deleteAccount = createAsyncThunk(
+  "auth/deleteAccount",
+  async (_, { rejectWithValue }) => {}
+);
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
