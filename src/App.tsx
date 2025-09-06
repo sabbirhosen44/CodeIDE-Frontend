@@ -21,6 +21,7 @@ import PricingPage from "./pages/PricingPage";
 import SnippetDetailPage from "./pages/snippets/SnippetDetailPage";
 import SnippetsPage from "./pages/snippets/SnippetsPage";
 import TemplatesPage from "./pages/TemplatesPage";
+import SettingPage from "./pages/settings/SettingPage";
 
 const router = createBrowserRouter([
   {
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
       {
         path: "/dashboard",
         element: <DashboardPage />,
+      },
+      {
+        path: "/settings",
+        element: <SettingPage />,
       },
       {
         path: "/admin",
