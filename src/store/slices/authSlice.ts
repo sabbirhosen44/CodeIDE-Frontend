@@ -161,7 +161,26 @@ export const resetPassword = createAsyncThunk(
 
 export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
-  async (_, { rejectWithValue }) => {}
+  async (profileFormData: FormData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return rejectWithValue("No authentication token");
+      }
+
+      const response = await axios.put(`${API}/auth/profile`, profileFormData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update profile data"
+      );
+    }
+  }
 );
 
 export const changePassword = createAsyncThunk(

@@ -20,10 +20,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RootState } from "@/store";
+import { AppDispatch, RootState } from "@/store";
+import { updateProfile } from "@/store/slices/authSlice";
+import { profile } from "console";
 import { useState } from "react";
 import { FaRegTrashCan } from "react-icons/fa6";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const SettingPage = () => {
   const { user, isAuthenticated, isLoading } = useSelector(
@@ -32,22 +34,32 @@ const SettingPage = () => {
   const [profileForm, setProfileForm] = useState({
     name: user?.name || "",
     email: user?.email || "",
+    profileImage: user?.profileImage || "",
   });
-
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+  const dispatch = useDispatch<AppDispatch>();
 
-  const profileFormChangeHandler = (field: string, value: string) => {
+  const profileFormChangeHandler = (field: string, value: any) => {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
   };
   const passwordFormChangeHandler = (field: string, value: string) => {
     setPasswordForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const saveChangesHandler = () => {};
+  const saveChangesHandler = async () => {
+    const formData = new FormData();
+    formData.append("name", profileForm.name);
+    formData.append("email", profileForm.email);
+
+    if (profileForm.profileImage instanceof File)
+      formData.append("profileImage", profileForm.profileImage);
+
+    const result = await dispatch(updateProfile(formData));
+  };
   const updatePasswordHandler = () => {};
 
   if (isLoading)
@@ -82,6 +94,12 @@ const SettingPage = () => {
                   type="file"
                   id="picture"
                   className="border border-border"
+                  onChange={(e) => {
+                    profileFormChangeHandler(
+                      "profileImage",
+                      e.target.files?.[0] || null
+                    );
+                  }}
                 />
               </div>
             </div>
