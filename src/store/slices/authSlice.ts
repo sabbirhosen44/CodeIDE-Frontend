@@ -1,10 +1,10 @@
-import { authState } from "@/types";
+import { AuthState } from "@/types";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
 
-const initialState: authState = {
+const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   token: localStorage.getItem("token"),
@@ -301,6 +301,20 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Update Profile
+      .addCase(updateProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        console.log(state.user);
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

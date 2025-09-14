@@ -3,10 +3,12 @@ export interface User {
   name: string;
   email: string;
   role: string;
-  profileImage?: string | File;
+  avatarUrl: string;
+  plan: string;
+  isEmailVerified: boolean;
 }
 
-export interface authState {
+export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   token: string | null;
@@ -188,4 +190,10 @@ export interface SnippetFormState {
   description: string;
   tags: string;
   language: string;
+}
+
+export interface ProfileForm {
+  name: string | undefined;
+  email: string | undefined;
+  imageFile: File | null;
 }

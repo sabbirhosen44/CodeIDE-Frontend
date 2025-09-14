@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,21 +21,23 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { AppDispatch, RootState } from "@/store";
-import { updateProfile } from "@/store/slices/authSlice";
-import { profile } from "console";
-import { useState } from "react";
+import { loadUser, updateProfile } from "@/store/slices/authSlice";
+import { ProfileForm } from "@/types";
+import { useEffect, useState } from "react";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router";
 
 const SettingPage = () => {
   const { user, isAuthenticated, isLoading } = useSelector(
     (state: RootState) => state.auth
   );
-  const [profileForm, setProfileForm] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    profileImage: user?.profileImage || "",
+  const [profileForm, setProfileForm] = useState<ProfileForm>({
+    name: user?.name,
+    email: user?.email,
+    imageFile: null,
   });
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -42,6 +45,41 @@ const SettingPage = () => {
     confirmPassword: "",
   });
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const showToast = useToast();
+
+  const isAdmin = user?.role === "admin";
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token && !isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (isAdmin) {
+      navigate("/admin/settings");
+      return;
+    }
+  }, [isAuthenticated, navigate, isAdmin]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && !user && !isAuthenticated) {
+      dispatch(loadUser());
+    }
+  }, [dispatch, user, isAuthenticated]);
+
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        name: user?.name,
+        email: user?.email,
+        imageFile: null,
+      });
+    }
+  }, [user]);
 
   const profileFormChangeHandler = (field: string, value: any) => {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
@@ -51,19 +89,34 @@ const SettingPage = () => {
   };
 
   const saveChangesHandler = async () => {
-    const formData = new FormData();
-    formData.append("name", profileForm.name);
-    formData.append("email", profileForm.email);
+    try {
+      const formData = new FormData();
+      formData.append("name", profileForm.name as string);
+      formData.append("email", profileForm.email as string);
 
-    if (profileForm.profileImage instanceof File)
-      formData.append("profileImage", profileForm.profileImage);
+      if (profileForm.imageFile instanceof File)
+        formData.append("imageFile", profileForm.imageFile);
 
-    const result = await dispatch(updateProfile(formData));
+      const result = await dispatch(updateProfile(formData));
+
+      if (updateProfile.fulfilled.match(result)) {
+        setProfileForm((prev) => ({ ...prev, imageFile: null }));
+        showToast("Profile updated successfully!", "success");
+      } else {
+        throw new Error(result.payload as string);
+      }
+    } catch (error: any) {
+      setProfileForm((prev) => ({ ...prev, imageFile: null }));
+      showToast(
+        `Error: ${error.message || "Failed to update profile data"}`,
+        "error"
+      );
+    }
   };
+
   const updatePasswordHandler = () => {};
 
-  if (isLoading)
-    return <LoadingSnipper>Loading user profile...</LoadingSnipper>;
+  if (isLoading) return <LoadingSnipper>Loading Settings...</LoadingSnipper>;
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
@@ -81,13 +134,17 @@ const SettingPage = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-8">
-              <img
-                src={
-                  "https://plus.unsplash.com/premium_photo-1689977927774-401b12d137d6?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                }
-                alt="profile picture"
-                className="h-[100px] w-[100px] object-cover rounded-full border border-border"
-              />
+              <Avatar className="h-[100px] w-[100px]  rounded-full border border-border">
+                <AvatarImage
+                  className="object-cover"
+                  src={user?.avatarUrl}
+                  alt={user?.name}
+                />
+                <AvatarFallback className="text-2xl">
+                  {user?.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+
               <div className="space-y-2">
                 <Label htmlFor="picture">Change picture</Label>
                 <Input
@@ -96,7 +153,7 @@ const SettingPage = () => {
                   className="border border-border"
                   onChange={(e) => {
                     profileFormChangeHandler(
-                      "profileImage",
+                      "imageFile",
                       e.target.files?.[0] || null
                     );
                   }}
@@ -108,7 +165,7 @@ const SettingPage = () => {
                 <Label>Full Name</Label>
                 <Input
                   type="text"
-                  placeholder=""
+                  value={profileForm.name}
                   className=" border border-border"
                   onChange={(e) =>
                     profileFormChangeHandler("name", e.target.value)
@@ -119,10 +176,10 @@ const SettingPage = () => {
                 <Label>Email Address</Label>
                 <Input
                   type="email"
-                  placeholder=""
+                  value={profileForm.email}
                   className=" border border-border"
                   onChange={(e) =>
-                    profileFormChangeHandler("password", e.target.value)
+                    profileFormChangeHandler("email", e.target.value)
                   }
                 />
               </div>
@@ -139,19 +196,29 @@ const SettingPage = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label>Account ID</Label>
-                <p>6872857c7a65c45646e32e03</p>
+                <p>{user?._id}</p>
               </div>
               <div>
                 <Label>Account Type</Label>
-                <p>user</p>
+                <p>
+                  {user?.role
+                    ? user.role.charAt(0).toUpperCase() +
+                      user.role.slice(1).toLowerCase()
+                    : "Free"}
+                </p>
               </div>
               <div>
                 <Label>Current Plan</Label>
-                <p>Free</p>
+                <p>
+                  {user?.plan
+                    ? user.plan.charAt(0).toUpperCase() +
+                      user.plan.slice(1).toLowerCase()
+                    : "Free"}
+                </p>
               </div>
               <div>
                 <Label>Email Verified</Label>
-                <p>Verified</p>
+                <p>{user?.isEmailVerified ? "Verified" : "Not Verified"}</p>
               </div>
             </div>
           </CardContent>
