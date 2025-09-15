@@ -184,8 +184,31 @@ export const updateProfile = createAsyncThunk(
 );
 
 export const changePassword = createAsyncThunk(
-  "auth/updatePassword",
-  async (_, { rejectWithValue }) => {}
+  "auth/changePassword",
+  async (passwordFormData: FormData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return rejectWithValue("No authentication token");
+      }
+
+      const response = await axios.put(
+        `${API}/auth/change-password`,
+        passwordFormData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update profile data"
+      );
+    }
+  }
 );
 
 export const deleteAccount = createAsyncThunk(
@@ -312,9 +335,20 @@ const authSlice = createSlice({
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload;
-        console.log(state.user);
       })
       .addCase(updateProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Change Password
+      .addCase(changePassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

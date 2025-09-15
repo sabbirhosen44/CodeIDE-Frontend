@@ -23,23 +23,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { AppDispatch, RootState } from "@/store";
-import { loadUser, updateProfile } from "@/store/slices/authSlice";
+import {
+  changePassword,
+  loadUser,
+  updateProfile,
+} from "@/store/slices/authSlice";
 import { ProfileForm } from "@/types";
 import { useEffect, useState } from "react";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
+import { passwordFormValues, passwordSchema } from "@/schemas";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const SettingPage = () => {
   const { user, isAuthenticated, isLoading } = useSelector(
     (state: RootState) => state.auth
   );
+  const [isShowCurrentPassword, setIsShowCurrentPassword] =
+    useState<boolean>(false);
+  const [isShowNewPassword, setIsShowNewPassword] = useState<boolean>(false);
+  const [isShowConfirmPassword, setIsShowConfirmPassword] =
+    useState<boolean>(false);
   const [profileForm, setProfileForm] = useState<ProfileForm>({
     name: user?.name,
     email: user?.email,
     imageFile: null,
   });
-  const [passwordForm, setPasswordForm] = useState({
+  const [passwordForm, setPasswordForm] = useState<passwordFormValues>({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -84,7 +95,10 @@ const SettingPage = () => {
   const profileFormChangeHandler = (field: string, value: any) => {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
   };
-  const passwordFormChangeHandler = (field: string, value: string) => {
+  const passwordFormChangeHandler = (
+    field: keyof passwordFormValues,
+    value: string
+  ) => {
     setPasswordForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -114,7 +128,30 @@ const SettingPage = () => {
     }
   };
 
-  const updatePasswordHandler = () => {};
+  const updatePasswordHandler = async () => {
+    try {
+      const validateData = passwordSchema.parse(passwordForm);
+
+      const formData = new FormData();
+      formData.append("currentPassword", validateData.currentPassword);
+      formData.append("newPassword", validateData.newPassword);
+
+      const result = await dispatch(changePassword(formData));
+      if (changePassword.fulfilled.match(result)) {
+        showToast("Password update successfully", "success");
+      } else {
+        throw new Error(result.payload as string);
+      }
+    } catch (error: any) {
+      let errorMessage;
+      if (error.errors) {
+        errorMessage = error.errors[0].message;
+      } else {
+        errorMessage = error.message;
+      }
+      showToast(`${errorMessage} ` || "Failed to updated Password", "error");
+    }
+  };
 
   if (isLoading) return <LoadingSnipper>Loading Settings...</LoadingSnipper>;
 
@@ -232,35 +269,53 @@ const SettingPage = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="relative space-y-2">
                 <Label>Current Password</Label>
                 <Input
-                  type="password"
+                  type={isShowCurrentPassword ? "text" : "password"}
                   className=" border border-border"
                   onChange={(e) =>
                     passwordFormChangeHandler("currentPassword", e.target.value)
                   }
                 />
+                <div
+                  className={`absolute right-4 top-1/2   cursor-pointer`}
+                  onClick={() => setIsShowCurrentPassword((prev) => !prev)}
+                >
+                  {isShowCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+                </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label>New Password</Label>
                 <Input
-                  type="password"
+                  type={isShowNewPassword ? "text" : "password"}
                   className=" border border-border"
                   onChange={(e) =>
                     passwordFormChangeHandler("newPassword", e.target.value)
                   }
                 />
+                <div
+                  className={`absolute right-4 top-1/2   cursor-pointer`}
+                  onClick={() => setIsShowNewPassword((prev) => !prev)}
+                >
+                  {isShowNewPassword ? <FaEyeSlash /> : <FaEye />}
+                </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label>Confirm New Password</Label>
                 <Input
-                  type="password"
+                  type={isShowConfirmPassword ? "text" : "password"}
                   className=" border border-border"
                   onChange={(e) =>
                     passwordFormChangeHandler("confirmPassword", e.target.value)
                   }
                 />
+                <div
+                  className={`absolute right-4 top-1/2   cursor-pointer`}
+                  onClick={() => setIsShowConfirmPassword((prev) => !prev)}
+                >
+                  {isShowConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </div>
               </div>
             </div>
             <Button onClick={updatePasswordHandler}>Update Password</Button>
