@@ -25,7 +25,9 @@ import { useToast } from "@/hooks/use-toast";
 import { AppDispatch, RootState } from "@/store";
 import {
   changePassword,
+  deleteAccount,
   loadUser,
+  logout,
   updateProfile,
 } from "@/store/slices/authSlice";
 import { ProfileForm } from "@/types";
@@ -150,6 +152,17 @@ const SettingPage = () => {
         errorMessage = error.message;
       }
       showToast(`${errorMessage} ` || "Failed to updated Password", "error");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await dispatch(deleteAccount());
+      showToast("Account deleted successfully", "success");
+      await dispatch(logout());
+      navigate("/login");
+    } catch (error: any) {
+      showToast(`${error}` || "Failed to delete account", "error");
     }
   };
 
@@ -356,7 +369,10 @@ const SettingPage = () => {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
                       Delete Account
                     </AlertDialogAction>
                   </AlertDialogFooter>
