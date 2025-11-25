@@ -31,7 +31,10 @@ import {
 import { supportedFrameworks, supportedLanguages } from "@/constants";
 import { useToast } from "@/hooks/use-toast";
 import { AppDispatch, RootState } from "@/store";
-import { createProjectFromTemplate } from "@/store/slices/projectSlice";
+import {
+  createProjectFromTemplate,
+  fetchUserProjects,
+} from "@/store/slices/projectSlice";
 import { fetchTemplates, setCurrentPage } from "@/store/slices/templateSlice";
 import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
@@ -43,7 +46,10 @@ const TemplatesPage = () => {
   const { templates, isLoading, totalPages, currentPage } = useSelector(
     (state: RootState) => state.template
   );
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, isAuthenticated } = useSelector(
+    (state: RootState) => state.auth
+  );
+  const { projects } = useSelector((state: RootState) => state.project);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const showToast = useToast();
@@ -70,6 +76,30 @@ const TemplatesPage = () => {
       })
     );
   }, [dispatch, searchQuery, languageFilter, frameworkFilter, currentPage]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      dispatch(fetchUserProjects());
+    }
+  }, [dispatch, isAuthenticated, user]);
+
+  const getProjectLimit = (plan: string) => {
+    switch (plan) {
+      case "free":
+        return 5;
+      case "pro":
+        return Number.POSITIVE_INFINITY;
+      default:
+        return 5;
+    }
+  };
+
+  const canCreateProject = () => {
+    if (!user) return false;
+
+    const limit = getProjectLimit(user.plan);
+    return projects.length < limit;
+  };
 
   const handleUseTemplate = (template: any) => {
     setSelectedTemplate(template);
@@ -140,10 +170,22 @@ const TemplatesPage = () => {
   return (
     <div className="container py-8 mx-auto">
       <div className="flex flex-col mb-6">
-        <h3 className="text-3xl font-bold mb-2">Templates</h3>
-        <p className="text-muted-foreground">
-          Browse and use pre-built templates to jumpstart your projects.
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-3xl font-bold mb-2">Templates</h3>
+            <p className="text-muted-foreground">
+              Browse and use pre-built templates to jumpstart your projects.
+            </p>
+          </div>
+          {user && (
+            <h2 className="text-sm text-muted-foreground font-bold">
+              Projects: {projects.length}/
+              {getProjectLimit(user.plan) === Number.POSITIVE_INFINITY
+                ? "∞"
+                : getProjectLimit(user.plan)}
+            </h2>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
