@@ -36,7 +36,7 @@ const PricingPage = () => {
         <h1 className="text-4xl mb-4 font-bold">Simple, Transparent Pricing</h1>
         <p className="text-lg text-muted-foreground">
           Choose the plan that's right for you and start building amazing
-          projects with CloudIDE.
+          projects with CodeIDE.
         </p>
       </div>
       <div className="flex justify-center mb-8">
@@ -61,7 +61,7 @@ const PricingPage = () => {
       </div>
 
       {/* Pricing Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2  gap-8 max-w-3xl mx-auto">
         {PRICING_PLANS.map((plan) => {
           const price: string =
             billingInterval === "yearly"
