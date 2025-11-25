@@ -113,7 +113,7 @@ const SnippetsPage = () => {
             </SelectContent>
           </Select>
 
-          <Select
+          {/* <Select
             defaultValue="recent"
             onValueChange={(value) => setSortOption(value)}
           >
@@ -125,7 +125,7 @@ const SnippetsPage = () => {
               <SelectItem value="likes">Most Liked</SelectItem>
               <SelectItem value="comments">Most Comments</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
         </div>
       </div>
 
@@ -154,11 +154,11 @@ const SnippetsPage = () => {
                     <div className="flex items-center">
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src={snippet.owner?.avatarUrl || ""}
-                          alt={snippet.owner?.name || ""}
+                          src={snippet?.owner?.avatarUrl || ""}
+                          alt={snippet?.owner?.name || ""}
                         />
                         <AvatarFallback>
-                          {snippet.owner.name.charAt(0)}
+                          {snippet?.owner?.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                     </div>
