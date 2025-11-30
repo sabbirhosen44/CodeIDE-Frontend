@@ -130,6 +130,7 @@ export interface Project {
 
 export interface ProjectState {
   projects: Project[];
+  userProjects: Project[];
   currentProject: Project | null;
   isLoading: boolean;
   error: string | null;
@@ -177,6 +178,7 @@ export interface Snippet {
 
 export interface SnippetState {
   snippets: Snippet[];
+  userSnippets: Snippet[];
   currentSnippet: Snippet | null;
   isLoading: boolean;
   error: string | null;

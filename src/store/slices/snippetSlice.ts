@@ -12,6 +12,7 @@ const API = import.meta.env.VITE_API_URL;
 
 const initialState: SnippetState = {
   snippets: [],
+  userSnippets: [],
   currentSnippet: null,
   isLoading: false,
   error: null,
@@ -64,7 +65,26 @@ export const createSnippet = createAsyncThunk(
 // get user snippets
 export const getUserSnippets = createAsyncThunk(
   "snippet/getUserSnippets",
-  async () => {}
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return rejectWithValue("No authentication token");
+      }
+
+      const response = await axios.get(`${API}/snippets/user/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data.data || response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch user snippets"
+      );
+    }
+  }
 );
 
 // get all snippets
@@ -232,6 +252,28 @@ const snippetSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
+      // Get User Snippets - FIXED
+      .addCase(getUserSnippets.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        getUserSnippets.fulfilled,
+        (state, action: PayloadAction<any>) => {
+          state.isLoading = false;
+          state.userSnippets = Array.isArray(action.payload)
+            ? action.payload
+            : [];
+        }
+      )
+      .addCase(
+        getUserSnippets.rejected,
+        (state, action: PayloadAction<any>) => {
+          state.isLoading = false;
+          state.error = action.payload;
+          state.userSnippets = [];
+        }
+      )
       // Get All Snippets
       .addCase(getSnippets.pending, (state) => {
         state.isLoading = true;

@@ -6,6 +6,7 @@ const API = import.meta.env.VITE_API_URL;
 
 const initialState: ProjectState = {
   projects: [],
+  userProjects: [],
   currentProject: null,
   isLoading: false,
   error: null,
@@ -193,7 +194,7 @@ const projectSlice = createSlice({
       })
       .addCase(fetchUserProjects.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.projects = action.payload.data || [];
+        state.userProjects = action.payload.data || [];
         state.totalCount = action.payload.total || 0;
         state.totalPages = action.payload.pages || 0;
         state.currentPage = action.payload.page || 1;
@@ -201,7 +202,7 @@ const projectSlice = createSlice({
       .addCase(fetchUserProjects.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
-        state.projects = [];
+        state.userProjects = [];
       })
 
       // Fetch Project By ID

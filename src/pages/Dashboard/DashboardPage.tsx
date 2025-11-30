@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -52,69 +52,31 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-
-// Mock data
-const mockProjects = [
-  {
-    _id: "1",
-    name: "Project Alpha",
-    description: "A full-stack e-commerce application with React and Node.js",
-    language: "JavaScript",
-    lastModified: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: "2",
-    name: "Project Beta",
-    description: "Real-time weather app using OpenWeather API",
-    language: "TypeScript",
-    lastModified: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: "3",
-    name: "Project Gamma",
-    description: "Simple task management application with drag and drop",
-    language: "React",
-    lastModified: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: "4",
-    name: "Project Delta",
-    description: "Personal portfolio with modern design",
-    language: "HTML/CSS",
-    lastModified: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
-const mockSnippets = [
-  {
-    _id: "1",
-    title: "Snippet One",
-    description: "A reusable custom hook for fetching data with loading states",
-    language: "TypeScript",
-    likeCount: 42,
-    commentCount: 8,
-  },
-  {
-    _id: "2",
-    title: "Snippet Two",
-    description: "Smooth fade-in animation with keyframes",
-    language: "CSS",
-    likeCount: 28,
-    commentCount: 5,
-  },
-  {
-    _id: "3",
-    title: "Snippet Three",
-    description: "Utility function for making authenticated API calls",
-    language: "JavaScript",
-    likeCount: 35,
-    commentCount: 12,
-  },
-];
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
+import { fetchUserProjects } from "@/store/slices/projectSlice";
+import { getUserSnippets } from "@/store/slices/snippetSlice";
+import { loadUser } from "@/store/slices/authSlice";
+import LoadingSnipper from "@/components/LoadingSnipper";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    token,
+  } = useSelector((state: RootState) => state.auth);
+  const {
+    userProjects,
+    isLoading: projectLoading,
+    error: projectsError,
+  } = useSelector((state: RootState) => state.project);
+  const { userSnippets, isLoading: snippetLoading } = useSelector(
+    (state: RootState) => state.snippet
+  );
   const [renameDialog, setRenameDialog] = useState({
     open: false,
     item: null as any,
@@ -126,6 +88,7 @@ const DashboardPage = () => {
     type: null as "project" | "snippet" | null,
   });
   const [newName, setNewName] = useState("");
+  const [apiErrors, setApiErrors] = useState<string[]>([]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -161,9 +124,30 @@ const DashboardPage = () => {
     setDeleteDialog({ open: false, item: null, type: null });
   };
 
-  const getTotalLikes = () => {
-    return mockSnippets.reduce((sum, s) => sum + s.likeCount, 0);
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      setApiErrors([]);
+      try {
+        await dispatch(fetchUserProjects({}));
+      } catch (error: any) {
+        setApiErrors((prev) => [...prev, "Failed to load user Projects"]);
+      }
+
+      try {
+        await dispatch(getUserSnippets());
+      } catch (error: any) {
+        setApiErrors((prev) => [...prev, "Failed to load user snippets"]);
+      }
+    };
+    fetchData();
+  }, [user, isAuthenticated, token, dispatch]);
+  
+
+  if (authLoading || projectLoading) {
+    return <LoadingSnipper>{"Loading your dashboard..."}</LoadingSnipper>;
+  }
+
+  console.log(userProjects);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -171,8 +155,8 @@ const DashboardPage = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Welcome back, Developer!
+            <h1 className="text-4xl font-bold mb-2 bg-blue-600  bg-clip-text text-transparent">
+              {`Welcome back, ${user?.name || "Developer!"}`}
             </h1>
             <p className="text-muted-foreground text-lg">
               Let's build something amazing today
@@ -215,7 +199,7 @@ const DashboardPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
-                    {mockProjects.length}
+                    {userProjects.length}
                   </div>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                     Total projects
@@ -234,10 +218,10 @@ const DashboardPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-green-900 dark:text-green-100">
-                    {mockSnippets.length}
+                    {userSnippets.length}
                   </div>
                   <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    Total likes: {getTotalLikes()}
+                    Total likes: {0}
                   </p>
                 </CardContent>
               </Card>
@@ -267,10 +251,10 @@ const DashboardPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockProjects.slice(0, 4).map((project) => (
+                  {userProjects.slice(0, 4).map((project) => (
                     <div
                       key={project._id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors group"
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors group cursor-pointer"
                     >
                       <div className="flex items-center space-x-4">
                         <div className="bg-primary/10 p-3 rounded-lg">
@@ -285,7 +269,7 @@ const DashboardPage = () => {
                           </p>
                           <div className="flex items-center gap-3 mt-1">
                             <Badge variant="secondary" className="text-xs">
-                              {project.language}
+                              {project?.templateId?.language}
                             </Badge>
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="h-3 w-3" />
@@ -344,7 +328,7 @@ const DashboardPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockProjects.map((project) => (
+                  {userProjects.map((project) => (
                     <div
                       key={project._id}
                       className="flex flex-col md:flex-row md:items-center justify-between p-6 border rounded-lg hover:bg-accent/50 transition-colors group"
@@ -362,7 +346,7 @@ const DashboardPage = () => {
                           </p>
                           <div className="flex items-center gap-3">
                             <Badge variant="secondary">
-                              {project.language}
+                              {project?.templateId?.language}
                             </Badge>
                             <span className="text-sm text-muted-foreground flex items-center gap-1">
                               <Clock className="h-4 w-4" />
@@ -407,7 +391,7 @@ const DashboardPage = () => {
                   Previous
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  Showing {mockProjects.length} projects
+                  Showing {userProjects.length} projects
                 </span>
                 <Button variant="outline" size="sm" disabled>
                   Next
@@ -432,7 +416,7 @@ const DashboardPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockSnippets.map((snippet) => (
+                  {userSnippets.map((snippet) => (
                     <div
                       key={snippet._id}
                       className="flex flex-col md:flex-row md:items-center justify-between p-6 border rounded-lg hover:bg-accent/50 transition-colors group"
@@ -452,7 +436,7 @@ const DashboardPage = () => {
                           </span>
                           <span className="text-sm text-muted-foreground flex items-center gap-1">
                             <Code2 className="h-4 w-4" />
-                            {snippet.commentCount} comments
+                            {snippet.commentcount} comments
                           </span>
                         </div>
                       </div>
@@ -492,7 +476,7 @@ const DashboardPage = () => {
                   Previous
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  Showing {mockSnippets.length} snippets
+                  Showing {userSnippets.length} snippets
                 </span>
                 <Button variant="outline" size="sm" disabled>
                   Next

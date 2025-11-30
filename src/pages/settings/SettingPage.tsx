@@ -273,6 +273,7 @@ const SettingPage = () => {
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Password</CardTitle>
