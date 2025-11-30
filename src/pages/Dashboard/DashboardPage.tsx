@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -109,6 +109,14 @@ const DashboardPage = () => {
     setRenameDialog({ open: true, item, type });
   };
 
+  const getTotalLikes = useCallback(() => {
+    try {
+      return userSnippets.reduce((sum, s) => sum + (s.likeCount || 0), 0);
+    } catch (error) {
+      return 0;
+    }
+  }, [userSnippets]);
+
   const confirmRename = () => {
     console.log("Renaming", renameDialog.type, "to", newName);
     setRenameDialog({ open: false, item: null, type: null });
@@ -141,7 +149,6 @@ const DashboardPage = () => {
     };
     fetchData();
   }, [user, isAuthenticated, token, dispatch]);
-  
 
   if (authLoading || projectLoading) {
     return <LoadingSnipper>{"Loading your dashboard..."}</LoadingSnipper>;
@@ -221,7 +228,7 @@ const DashboardPage = () => {
                     {userSnippets.length}
                   </div>
                   <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    Total likes: {0}
+                    Total likes: {getTotalLikes()}
                   </p>
                 </CardContent>
               </Card>
