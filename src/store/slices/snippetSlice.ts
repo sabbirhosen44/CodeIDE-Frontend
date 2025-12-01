@@ -1,12 +1,6 @@
 import type { SnippetState } from "@/types";
-import {
-  createAsyncThunk,
-  createSlice,
-  isRejectedWithValue,
-  PayloadAction,
-} from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-import { error } from "console";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -177,13 +171,71 @@ export const toggleLikeSnippet = createAsyncThunk(
 // Update snippet
 export const updateSnippet = createAsyncThunk(
   "snippet/updateSnippet",
-  async () => {}
+  async (
+    {
+      snippetId,
+      snippetData,
+    }: {
+      snippetId: string;
+      snippetData: {
+        title?: string;
+        description?: string;
+        tags?: string[];
+        code?: string;
+        language?: string;
+      };
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return rejectWithValue("No authentication token");
+      }
+
+      const response = await axios.put(
+        `${API}/snippets/${snippetId}`,
+        snippetData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update snippet"
+      );
+    }
+  }
 );
 
 // Delete snippet
 export const deleteSnippet = createAsyncThunk(
   "snippet/deleteSnippet",
-  async () => {}
+  async (snippetId: string, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return rejectWithValue("No authentication token");
+      }
+
+      const response = await axios.delete(`${API}/snippets/${snippetId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return { snippetId };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to delete snippet"
+      );
+    }
+  }
 );
 
 // Add comment to snippet

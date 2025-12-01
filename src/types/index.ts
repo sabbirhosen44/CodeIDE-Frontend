@@ -171,7 +171,7 @@ export interface Snippet {
   likeCount: number;
   isLiked: Boolean;
   comments: any[];
-  commentcount: number;
+  commentCount: number;
   createdAt: string;
   updatedAt: string;
 }
