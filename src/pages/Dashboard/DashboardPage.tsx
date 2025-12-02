@@ -44,14 +44,14 @@ import {
   getUserSnippets,
   updateSnippet,
 } from "@/store/slices/snippetSlice";
-import { Project, Snippet } from "@/types";
+import { fetchTemplates } from "@/store/slices/templateSlice";
+import { Project, Snippet, Template } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 import {
   FaArrowRight,
   FaChevronLeft,
   FaChevronRight,
   FaCode,
-  FaEye,
   FaFileCode,
   FaRegClock,
   FaRegStar,
@@ -59,6 +59,8 @@ import {
 } from "react-icons/fa";
 import { FaPencil } from "react-icons/fa6";
 import { FiActivity, FiMoreHorizontal } from "react-icons/fi";
+import { IoSparkles } from "react-icons/io5";
+import { LuFileSearch2 } from "react-icons/lu";
 import { SlCalender } from "react-icons/sl";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -81,6 +83,11 @@ const DashboardPage = () => {
   const { userSnippets, isLoading: snippetLoading } = useSelector(
     (state: RootState) => state.snippet
   );
+  const {
+    templates,
+    isLoading: templateLoading,
+    error: templateError,
+  } = useSelector((state: RootState) => state.template);
   const [editDialog, setEditDialog] = useState({
     open: false,
     item: null as any,
@@ -221,11 +228,17 @@ const DashboardPage = () => {
       } catch (error: any) {
         setApiErrors((prev) => [...prev, "Failed to load user snippets"]);
       }
+
+      try {
+        await dispatch(fetchTemplates({}));
+      } catch (error: any) {
+        setApiErrors((prev) => [...prev, "Failed to load templates"]);
+      }
     };
     fetchData();
   }, [user, isAuthenticated, token, editDialog, deleteDialog, dispatch]);
 
-  if (authLoading || projectLoading) {
+  if (authLoading || projectLoading || snippetLoading) {
     return <LoadingSnipper>{"Loading your dashboard..."}</LoadingSnipper>;
   }
 
@@ -388,6 +401,75 @@ const DashboardPage = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Popular Templates */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <IoSparkles className="h-5 w-5" />
+                      Popular Templates
+                    </CardTitle>
+                    <CardDescription>
+                      Explore available templates
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      console.log("Navigating to templates");
+                      navigate("/templates");
+                    }}
+                  >
+                    Browse All
+                    <FaArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {[...templates]
+                    .sort((a, b) => b.downloads - a.downloads)
+                    .slice(0, 6)
+                    .map((template: Template) => (
+                      <Card
+                        key={template._id}
+                        className="border hover:border-primary/50 transition-all hover:shadow-md group cursor-pointer"
+                        onClick={() => {
+                          navigate(`/editor?template=${template._id}`);
+                        }}
+                      >
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base group-hover:text-primary transition-colors">
+                            {template.name}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pb-3">
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {template.description}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <Badge variant="outline">{template.language}</Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {template.downloads} downloads
+                            </span>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="pt-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full bg-transparent"
+                          >
+                            Use Template
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Projects Tab */}
@@ -405,61 +487,71 @@ const DashboardPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {userProjects.map((project) => (
-                    <div
-                      key={project._id}
-                      className="flex flex-col md:flex-row md:items-center justify-between p-6 border rounded-lg hover:bg-accent/50 transition-colors group cursor-pointer"
-                    >
-                      <div className="flex items-center space-x-4 mb-4 md:mb-0">
-                        <div className="bg-primary/10 p-3 rounded-lg">
-                          <FaFileCode className="size-6 text-primary" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                            {project.name}
-                          </h4>
-                          <p className="text-muted-foreground mb-2">
-                            {project.description}
-                          </p>
-                          <div className="flex items-center gap-3">
-                            <Badge variant="secondary">
-                              {project?.templateId?.language}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground flex items-center gap-1">
-                              <FaRegClock className="size-4" />
-                              {formatDate(project.lastModified)}
-                            </span>
+                  {userProjects.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                      <LuFileSearch2 className="h-10 w-10 mb-3" />
+                      <p className="text-lg font-semibold">No Projects Yet</p>
+                      <p className="text-sm mt-1">
+                        Create your first project to get started.
+                      </p>
+                    </div>
+                  ) : (
+                    userProjects.map((project) => (
+                      <div
+                        key={project._id}
+                        className="flex flex-col md:flex-row md:items-center justify-between p-6 border rounded-lg hover:bg-accent/50 transition-colors group cursor-pointer"
+                      >
+                        <div className="flex items-center space-x-4 mb-4 md:mb-0">
+                          <div className="bg-primary/10 p-3 rounded-lg">
+                            <FaFileCode className="size-6 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                              {project.name}
+                            </h4>
+                            <p className="text-muted-foreground mb-2">
+                              {project.description}
+                            </p>
+                            <div className="flex items-center gap-3">
+                              <Badge variant="secondary">
+                                {project?.templateId?.language}
+                              </Badge>
+                              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                <FaRegClock className="size-4" />
+                                {formatDate(project.lastModified)}
+                              </span>
+                            </div>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              navigate(`/editor?project=${project?._id}`);
+                            }}
+                          >
+                            Open Project
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <FiMoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => handleEdit(project, "project")}
+                              >
+                                <FaPencil className="size-4 mr-2 " />
+                                Rename
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            navigate(`/editor?project=${project?._id}`);
-                          }}
-                        >
-                          Open Project
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <FiMoreHorizontal className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() => handleEdit(project, "project")}
-                            >
-                              <FaPencil className="size-4 mr-2 " />
-                              Rename
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
@@ -493,66 +585,78 @@ const DashboardPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {userSnippets.map((snippet) => (
-                    <div
-                      key={snippet._id}
-                      className="flex flex-col md:flex-row  cursor-pointer md:items-center justify-between p-6 border rounded-lg hover:bg-accent/50 transition-colors group"
-                    >
-                      <div className="mb-4 md:mb-0">
-                        <h4 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                          {snippet.title}
-                        </h4>
-                        <p className="text-muted-foreground line-clamp-2 mb-2">
-                          {snippet.description}
-                        </p>
-                        <div className="flex items-center gap-3">
-                          <Badge variant="secondary">{snippet.language}</Badge>
-                          <span className="text-sm text-muted-foreground flex items-center gap-1">
-                            <FaRegStar className="size-4" />
-                            {snippet.likeCount} likes
-                          </span>
-                          <span className="text-sm text-muted-foreground flex items-center gap-1">
-                            <FaFileCode className="size-4" />
-                            {snippet.commentCount || 0} comments
-                          </span>
+                  {userSnippets.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                      <LuFileSearch2 className="h-10 w-10 mb-3" />
+                      <p className="text-lg font-semibold">No Snippets Yet</p>
+                      <p className="text-sm mt-1">
+                        Start creating your first snippet to see it here.
+                      </p>
+                    </div>
+                  ) : (
+                    userSnippets.map((snippet) => (
+                      <div
+                        key={snippet._id}
+                        className="flex flex-col md:flex-row  cursor-pointer md:items-center justify-between p-6 border rounded-lg hover:bg-accent/50 transition-colors group"
+                      >
+                        <div className="mb-4 md:mb-0">
+                          <h4 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                            {snippet.title}
+                          </h4>
+                          <p className="text-muted-foreground line-clamp-2 mb-2">
+                            {snippet.description}
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary">
+                              {snippet.language}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                              <FaRegStar className="size-4" />
+                              {snippet.likeCount} likes
+                            </span>
+                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                              <FaFileCode className="size-4" />
+                              {snippet.commentCount || 0} comments
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              navigate(`/snippets/${snippet._id}`);
+                            }}
+                          >
+                            View Snippet
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <FiMoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => handleEdit(snippet, "snippet")}
+                              >
+                                <FaPencil className="size-4 mr-2" />
+                                Rename
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600 cursor-pointer"
+                                onClick={() => handleDelete(snippet, "snippet")}
+                              >
+                                <FaRegTrashAlt className="size-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            navigate(`/snippets/${snippet._id}`);
-                          }}
-                        >
-                          View Snippet
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <FiMoreHorizontal className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() => handleEdit(snippet, "snippet")}
-                            >
-                              <FaPencil className="size-4 mr-2" />
-                              Rename
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-600 cursor-pointer"
-                              onClick={() => handleDelete(snippet, "snippet")}
-                            >
-                              <FaRegTrashAlt className="size-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
