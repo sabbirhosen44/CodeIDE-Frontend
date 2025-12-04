@@ -65,6 +65,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -91,20 +92,20 @@ const AdminDashboard = () => {
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const showToast = useToast();
 
   useEffect(() => {
-    dispatch(getAdminStats());
-    if (activeTab === "templates") {
-      dispatch(clearError());
-      dispatch(
-        fetchTemplates({
-          page: currentPage,
-          limit: 10,
-          search: templateSearch || undefined,
-        })
-      );
-    }
-  }, [dispatch, activeTab, currentPage, templateSearch]);
+    const fetchAdminStats = async () => {
+      try {
+        await dispatch(getAdminStats()).unwrap();
+      } catch (error: any) {
+        showToast(`${error}`, "error");
+      }
+    };
+    fetchAdminStats();
+  }, [dispatch]);
+
+  console.log(adminStats);
 
   useEffect(() => {
     const newParams = new URLSearchParams(location.search);
@@ -342,7 +343,7 @@ const AdminDashboard = () => {
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
+                        <XAxis dataKey="month" />
                         <YAxis />
                         <Tooltip />
                         <Legend />
@@ -371,7 +372,7 @@ const AdminDashboard = () => {
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
+                        <XAxis dataKey="month" />
                         <YAxis />
                         <Tooltip />
                         <Legend />

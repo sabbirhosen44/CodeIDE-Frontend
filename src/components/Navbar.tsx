@@ -65,7 +65,9 @@ const Navbar = () => {
             <Link
               to={link.path}
               key={link.path}
-              className={`font-medium text-sm transition-colors ${link.path === location.pathname ? "text-primary" : ""}`}
+              className={`font-medium text-sm transition-colors ${
+                link.path === location.pathname ? "text-primary" : ""
+              }`}
             >
               {link.name}
             </Link>
@@ -82,9 +84,9 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-8 w-8 rounded-full"
+                  className="relative size-8 rounded-full"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="size-8">
                     <AvatarImage
                       src={"/placeholder.svg?height=32&width=32"}
                       alt={user?.name || "User"}
@@ -108,6 +110,7 @@ const Navbar = () => {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
+                  className="cursor-pointer"
                   onClick={() =>
                     navigate(user?.role === "admin" ? "/admin" : "/dashboard")
                   }
@@ -115,12 +118,18 @@ const Navbar = () => {
                   Dashboard
                 </DropdownMenuItem>
                 {user?.role !== "admin" && (
-                  <DropdownMenuItem onClick={() => navigate("/settings")}>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => navigate("/settings")}
+                  >
                     Settings
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={handleLogout}
+                >
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -150,7 +159,11 @@ const Navbar = () => {
                       <SheetClose asChild key={link.path}>
                         <Link
                           to={link.path}
-                          className={`font-medium text-sm transition-colors ${link.path === location.pathname ? "text-primary" : ""}`}
+                          className={`font-medium text-sm transition-colors ${
+                            link.path === location.pathname
+                              ? "text-primary"
+                              : ""
+                          }`}
                         >
                           {link.name}
                         </Link>
