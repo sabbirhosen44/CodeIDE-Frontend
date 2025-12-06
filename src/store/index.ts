@@ -5,6 +5,7 @@ import templateReducer from "./slices/templateSlice";
 import adminReducer from "./slices/adminSlice";
 import projectReducer from "./slices/projectSlice";
 import snippetReducer from "./slices/snippetSlice";
+import userRouter from "./slices/userSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     admin: adminReducer,
     project: projectReducer,
     snippet: snippetReducer,
+    user: userRouter,
   },
 });
 

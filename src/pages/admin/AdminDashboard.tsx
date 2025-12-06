@@ -81,6 +81,7 @@ const AdminDashboard = () => {
   const { stats: adminStats, isLoading: adminStatsLoading } = useSelector(
     (state: RootState) => state.admin
   );
+  // const {users} = useSelector((state:RootState)=>state.)
   const queryParams = new URLSearchParams(location.search);
   const tabFromUrl = queryParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "overview");
@@ -389,14 +390,80 @@ const AdminDashboard = () => {
         {activeTab === "users" && (
           <Card>
             <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>Under Construction</CardDescription>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>
+                  View and manage platform users (excluding admins)
+                </CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <p className="text-lg text-muted-foreground">
-                  User management functionality is currently under construction.
-                </p>
+              <div className="space-y-4">
+                {userProjects.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                    <LuFileSearch2 className="h-10 w-10 mb-3" />
+                    <p className="text-lg font-semibold">No Projects Yet</p>
+                    <p className="text-sm mt-1">
+                      Create your first project to get started.
+                    </p>
+                  </div>
+                ) : (
+                  userProjects.map((project) => (
+                    <div
+                      key={project._id}
+                      className="flex flex-col md:flex-row md:items-center justify-between p-6 border rounded-lg hover:bg-accent/50 transition-colors group cursor-pointer"
+                    >
+                      <div className="flex items-center space-x-4 mb-4 md:mb-0">
+                        <div className="bg-primary/10 p-3 rounded-lg">
+                          <FaFileCode className="size-6 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                            {project.name}
+                          </h4>
+                          <p className="text-muted-foreground mb-2">
+                            {project.description}
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary">
+                              {project?.templateId?.language}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                              <FaRegClock className="size-4" />
+                              {formatDate(project.lastModified)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            navigate(`/editor?project=${project?._id}`);
+                          }}
+                        >
+                          Open Project
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <FiMoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => handleEdit(project, "project")}
+                            >
+                              <FaPencil className="size-4 mr-2 " />
+                              Rename
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

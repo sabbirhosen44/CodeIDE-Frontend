@@ -6,6 +6,19 @@ export interface User {
   avatarUrl: string;
   plan: string;
   isEmailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastLogin?: string;
+}
+
+export interface UserState {
+  users: User[];
+  currentUser: User | null;
+  isLoading: boolean;
+  error: string | null;
+  totalPages: number;
+  currentPage: number;
+  totalCount: number;
 }
 
 export interface AuthState {
