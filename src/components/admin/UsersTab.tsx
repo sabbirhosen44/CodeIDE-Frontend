@@ -1,0 +1,174 @@
+import { FaEye, FaSearch, FaTrashAlt } from "react-icons/fa";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Input } from "../ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import Pagination from "../Pagination";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
+import { useEffect } from "react";
+import { getUsers } from "@/store/slices/userSlice";
+import { useToast } from "@/hooks/use-toast";
+import { setCurrentPage } from "@/store/slices/userSlice";
+
+const UsersTab = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { users, currentPage, totalPages } = useSelector(
+    (state: RootState) => state.user
+  );
+  const showToast = useToast();
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      dispatch(setCurrentPage(currentPage - 1));
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      dispatch(setCurrentPage(currentPage + 1));
+    }
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        await dispatch(getUsers({})).unwrap();
+      } catch (error: any) {
+        showToast(`${error}`, "error");
+      }
+    };
+    fetchUsers();
+  }, [dispatch]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <CardTitle>User Management</CardTitle>
+            <CardDescription>View and manage platform users</CardDescription>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative">
+              <FaSearch className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users..."
+                className="pl-8 w-full sm:w-[200px]"
+                // value={userSearch}
+                // onChange={(e) => setUserSearch(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="space-y-4">
+            {users.map((user) => (
+              <div
+                key={user._id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-md"
+              >
+                <div className="flex items-center mb-2 sm:mb-0">
+                  <Avatar className="h-10 w-10 mr-3">
+                    <AvatarImage
+                      src={user.avatarUrl || "/placeholder.svg"}
+                      alt={user.name}
+                    />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{user.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {user.email}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge
+                        variant={
+                          user.role === "admin" ? "default" : "secondary"
+                        }
+                      >
+                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      </Badge>
+                      <Badge variant="outline">{user.plan}</Badge>
+                      <span className="text-xs text-muted-foreground">
+                        Joined: {new Date(user.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    // onClick={() => viewUserProfile(user)}
+                  >
+                    <FaEye className="size-4 mr-1" />
+                    View Profile
+                  </Button>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-500 bg-transparent"
+                      >
+                        <FaTrashAlt className="size-4 mr-1" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete the user account.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                        // onClick={() => handleDeleteUser(user._id)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Pagination
+            onHandlePreviousPage={handlePreviousPage}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onHandleNextPage={handleNextPage}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default UsersTab;

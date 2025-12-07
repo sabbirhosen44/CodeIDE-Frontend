@@ -66,6 +66,11 @@ import {
   YAxis,
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
+import { getUsers } from "@/store/slices/userSlice";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import OverviewTab from "@/components/admin/OverviewTab";
+import Pagination from "@/components/Pagination";
+import UsersTab from "@/components/admin/UsersTab";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -78,10 +83,7 @@ const AdminDashboard = () => {
     currentPage,
     totalPages,
   } = useSelector((state: RootState) => state.template);
-  const { stats: adminStats, isLoading: adminStatsLoading } = useSelector(
-    (state: RootState) => state.admin
-  );
-  // const {users} = useSelector((state:RootState)=>state.)
+
   const queryParams = new URLSearchParams(location.search);
   const tabFromUrl = queryParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "overview");
@@ -94,19 +96,6 @@ const AdminDashboard = () => {
     message: string;
   } | null>(null);
   const showToast = useToast();
-
-  useEffect(() => {
-    const fetchAdminStats = async () => {
-      try {
-        await dispatch(getAdminStats()).unwrap();
-      } catch (error: any) {
-        showToast(`${error}`, "error");
-      }
-    };
-    fetchAdminStats();
-  }, [dispatch]);
-
-  console.log(adminStats);
 
   useEffect(() => {
     const newParams = new URLSearchParams(location.search);
@@ -273,201 +262,9 @@ const AdminDashboard = () => {
       </div>
 
       <div className="space-y-6">
-        {activeTab === "overview" && (
-          <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="bg-primary/5 border-primary/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Users
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center">
-                    <FaUserCircle className="size-5 text-primary mr-2" />
-                    <div className="text-2xl font-bold">
-                      {adminStatsLoading ? "..." : adminStats?.totalUsers || 0}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        {activeTab === "overview" && <OverviewTab />}
 
-              <Card className="bg-primary/5 border-primary/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Projects
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center">
-                    <FaLayerGroup className="size-5 text-primary mr-2" />
-                    <div className="text-2xl font-bold">
-                      {adminStatsLoading
-                        ? "..."
-                        : adminStats?.totalProjects || 0}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-primary/5 border-primary/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Templates & Snippets
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center">
-                    <FaCode className="size-5 text-primary mr-2" />
-                    <div className="text-2xl font-bold">
-                      {adminStatsLoading
-                        ? "..."
-                        : (adminStats?.totalTemplates || 0) +
-                          (adminStats?.totalSnippets || 0)}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>User Growth</CardTitle>
-                  <CardDescription>Monthly user registrations</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={adminStats?.userGrowth || []}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="users"
-                          stroke="#8884d8"
-                          activeDot={{ r: 8 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Project Growth</CardTitle>
-                  <CardDescription>Monthly project creation</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={adminStats?.projectGrowth || []}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="projects" fill="#82ca9d" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "users" && (
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>
-                  View and manage platform users (excluding admins)
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {userProjects.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-                    <LuFileSearch2 className="h-10 w-10 mb-3" />
-                    <p className="text-lg font-semibold">No Projects Yet</p>
-                    <p className="text-sm mt-1">
-                      Create your first project to get started.
-                    </p>
-                  </div>
-                ) : (
-                  userProjects.map((project) => (
-                    <div
-                      key={project._id}
-                      className="flex flex-col md:flex-row md:items-center justify-between p-6 border rounded-lg hover:bg-accent/50 transition-colors group cursor-pointer"
-                    >
-                      <div className="flex items-center space-x-4 mb-4 md:mb-0">
-                        <div className="bg-primary/10 p-3 rounded-lg">
-                          <FaFileCode className="size-6 text-primary" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                            {project.name}
-                          </h4>
-                          <p className="text-muted-foreground mb-2">
-                            {project.description}
-                          </p>
-                          <div className="flex items-center gap-3">
-                            <Badge variant="secondary">
-                              {project?.templateId?.language}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground flex items-center gap-1">
-                              <FaRegClock className="size-4" />
-                              {formatDate(project.lastModified)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            navigate(`/editor?project=${project?._id}`);
-                          }}
-                        >
-                          Open Project
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <FiMoreHorizontal className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() => handleEdit(project, "project")}
-                            >
-                              <FaPencil className="size-4 mr-2 " />
-                              Rename
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {activeTab === "users" && <UsersTab />}
 
         {activeTab === "templates" && (
           <div>

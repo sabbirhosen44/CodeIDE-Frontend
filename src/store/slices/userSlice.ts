@@ -70,6 +70,27 @@ const userSlice = createSlice({
       state.currentPage = action.payload;
     },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(getUsers.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getUsers.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.users = action.payload.data || [];
+        state.totalCount = action.payload.total || 0;
+        state.totalPages = action.payload.pages || 0;
+        state.currentPage = action.payload.page || 1;
+      })
+      .addCase(getUsers.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+        state.users = [];
+      });
+  },
 });
 
+export const { clearError, clearCurrentUser, setCurrentPage } =
+  userSlice.actions;
 export default userSlice.reducer;
