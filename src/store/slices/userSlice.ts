@@ -56,6 +56,27 @@ export const getUsers = createAsyncThunk(
   }
 );
 
+export const deleteUser = createAsyncThunk(
+  "user/deleteUser",
+  async (userId: string, { rejectWithValue }) => {
+    const token = localStorage.getItem("token");
+    if (!token) return rejectWithValue("No authentication token");
+
+    try {
+      const response = await axios.delete(`${API}/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return userId;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to delete user"
+      );
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -72,6 +93,7 @@ const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // get all Users
       .addCase(getUsers.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -87,6 +109,23 @@ const userSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
         state.users = [];
+      })
+      // delete user
+      .addCase(deleteUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.users = state.users.filter((user) => user._id !== action.payload);
+        if (state.currentUser?._id === action.payload) {
+          state.currentUser = null;
+        }
+        state.totalCount -= 1;
+      })
+      .addCase(deleteUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });

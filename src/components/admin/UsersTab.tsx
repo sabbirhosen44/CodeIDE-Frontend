@@ -24,17 +24,20 @@ import {
 import Pagination from "../Pagination";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import { useEffect } from "react";
-import { getUsers } from "@/store/slices/userSlice";
+import { useEffect, useState } from "react";
+import { deleteUser, getUsers } from "@/store/slices/userSlice";
 import { useToast } from "@/hooks/use-toast";
 import { setCurrentPage } from "@/store/slices/userSlice";
 
 const UsersTab = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const [userSearch, setUserSearch] = useState<string>("");
   const { users, currentPage, totalPages } = useSelector(
     (state: RootState) => state.user
   );
   const showToast = useToast();
+
+  console.log(currentPage, totalPages);
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -51,13 +54,27 @@ const UsersTab = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        await dispatch(getUsers({})).unwrap();
+        await dispatch(
+          getUsers({ search: userSearch, page: currentPage, limit: 10 })
+        ).unwrap();
       } catch (error: any) {
         showToast(`${error}`, "error");
       }
     };
     fetchUsers();
-  }, [dispatch]);
+  }, [dispatch, userSearch, currentPage]);
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await dispatch(deleteUser(userId)).unwrap();
+      await dispatch(
+        getUsers({ search: userSearch, page: currentPage, limit: 10 })
+      );
+      showToast("User deleted successfully", "success");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to delete user", "error");
+    }
+  };
 
   return (
     <Card>
@@ -73,8 +90,8 @@ const UsersTab = () => {
               <Input
                 placeholder="Search users..."
                 className="pl-8 w-full sm:w-[200px]"
-                // value={userSearch}
-                // onChange={(e) => setUserSearch(e.target.value)}
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
               />
             </div>
           </div>
@@ -148,7 +165,7 @@ const UsersTab = () => {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                        // onClick={() => handleDeleteUser(user._id)}
+                          onClick={() => handleDeleteUser(user._id)}
                         >
                           Delete
                         </AlertDialogAction>

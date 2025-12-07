@@ -1,4 +1,3 @@
-import { PropsWithChildren } from "react";
 import { Button } from "./ui/button";
 
 interface propsPagination {
