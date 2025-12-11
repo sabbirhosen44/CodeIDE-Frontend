@@ -56,6 +56,29 @@ export const getUsers = createAsyncThunk(
   }
 );
 
+export const getuserDetails = createAsyncThunk(
+  "user/getuserDetails",
+  async (userId: string, { rejectWithValue }) => {
+    const token = localStorage.getItem("token");
+    if (!token) return rejectWithValue("No authentication token");
+    console.log(userId);
+
+    try {
+      const response = await axios.get(`${API}/users/${userId}/details`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch users details"
+      );
+    }
+  }
+);
+
 export const deleteUser = createAsyncThunk(
   "user/deleteUser",
   async (userId: string, { rejectWithValue }) => {
@@ -109,6 +132,21 @@ const userSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
         state.users = [];
+      })
+      // getUserDetails
+      .addCase(getuserDetails.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getuserDetails.fulfilled, (state, action) => {
+        const { user, projectCount, snippetCount } = action.payload;
+
+        state.isLoading = false;
+        state.currentUser = { ...user, projectCount, snippetCount };
+      })
+      .addCase(getuserDetails.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       })
       // delete user
       .addCase(deleteUser.pending, (state) => {

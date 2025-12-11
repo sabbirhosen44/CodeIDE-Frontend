@@ -5,6 +5,8 @@ export interface User {
   role: string;
   avatarUrl: string;
   plan: string;
+  projectCount: number;
+  snippetCount: number;
   isEmailVerified: boolean;
   createdAt: string;
   updatedAt: string;
