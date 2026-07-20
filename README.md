@@ -36,7 +36,9 @@ The frontend of the CodeIDE Platform provides a responsive, intuitive web-based 
 ### 1.3 Key Features
 
 - **Code Editor**: Rich text editing powered by Monaco Editor, featuring syntax highlighting and code completion.
+- **Code Execution**: Seamless, asynchronous code compilation and run functionality powered by a custom self-hosted Docker execution engine supporting 10 languages (C++, C, Java, Python 3, JavaScript, Go, Rust, PHP, Ruby, and C#).
 - **Editor Settings**: Customizable editor options including theme, font size, font family, minimap, and additional settings for a tailored coding experience.
+
 - **AI Assistant**: Integrated AI-powered assistant in the code editor for real-time coding support, suggestions, and error detection.
 - **Responsive Design**: Optimized for devices of all sizes, ensuring a consistent experience on desktops, tablets, and mobiles.
 - **Theme Support**: Light/dark mode for the overall application UI.
