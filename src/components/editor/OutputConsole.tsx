@@ -176,70 +176,48 @@ const OutputConsole: React.FC<OutputConsoleProps> = ({
 
     try {
       const startTime = Date.now();
-      console.log("Submitting to Piston API");
+      console.log("Submitting to Judge0 via backend API");
 
-      const response = await fetch("https://emkc.org/api/v2/piston/execute", {
+      const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
+
+      const response = await fetch(`${API_BASE}/code/execute`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           language: language,
-          version: "*",
-          files: [
-            {
-              name: `main.${language === "python3" ? "py" : language === "javascript" ? "js" : language === "csharp" ? "cs" : language}`,
-              content: code,
-            },
-          ],
+          code: code,
           stdin: stdin,
-          args: [],
-          compile_timeout: 10000,
-          run_timeout: 3000,
-          compile_memory_limit: -1,
-          run_memory_limit: -1,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errJson = await response.json().catch(() => null);
+        const errMsg =
+          errJson?.error ||
+          errJson?.message ||
+          `Server error (${response.status})`;
+        throw new Error(errMsg);
       }
 
-      const pistonResult = await response.json();
-      console.log("Piston execution completed");
-      const executionTime = Date.now() - startTime;
+      const json = await response.json();
+      const judge0Result = json.data;
+      console.log("Judge0 execution completed:", judge0Result?.status);
 
-      let output = "";
-      let error = "";
+      const executionTime =
+        judge0Result?.executionTime ?? Date.now() - startTime;
 
-      if (pistonResult.compile) {
-        if (pistonResult.compile.stdout) {
-          output += pistonResult.compile.stdout;
-        }
-        if (pistonResult.compile.stderr) {
-          error += "Compilation Error:\n" + pistonResult.compile.stderr + "\n";
-        }
-        if (pistonResult.compile.code !== 0) {
-          error += `Compilation failed with exit code ${pistonResult.compile.code}\n`;
-        }
-      }
-
-      if (pistonResult.run) {
-        if (pistonResult.run.stdout) {
-          output += pistonResult.run.stdout;
-        }
-        if (pistonResult.run.stderr) {
-          error += pistonResult.run.stderr;
-        }
-      }
+      const output = (judge0Result?.stdout || "").trim();
+      const error = (judge0Result?.stderr || "").trim();
 
       const result: ExecutionResult = {
-        output: output.trim(),
-        error: error.trim(),
-        exitCode: pistonResult.run?.code || 0,
+        output,
+        error,
+        exitCode: judge0Result?.exitCode ?? (error ? 1 : 0),
         executionTime,
         language,
-        version: "Piston",
+        version: `Judge0 CE (${judge0Result?.status || "unknown"})`,
       };
 
       setOutputs((prev) =>
@@ -257,7 +235,7 @@ const OutputConsole: React.FC<OutputConsoleProps> = ({
         )
       );
     } catch (error) {
-      console.error("Piston execution failed:", error);
+      console.error("Judge0 execution failed:", error);
       const errorResult: ExecutionResult = {
         output: "",
         error:
@@ -265,7 +243,7 @@ const OutputConsole: React.FC<OutputConsoleProps> = ({
         exitCode: 1,
         executionTime: 0,
         language,
-        version: "Piston",
+        version: "Judge0 CE",
       };
       setOutputs((prev) =>
         prev.map((entry) =>
@@ -307,7 +285,7 @@ const OutputConsole: React.FC<OutputConsoleProps> = ({
                   exitCode: 1,
                   executionTime: 0,
                   language: entry.language,
-                  version: "Piston",
+                  version: "Judge0 CE",
                 },
                 status: "error",
               }
